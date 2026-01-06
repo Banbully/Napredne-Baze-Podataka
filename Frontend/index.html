@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrailMetrics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <head class="navbar">
+        <div class="container nav-logo-wrapper">
+            <div class="nav-logo">
+                <img src="resources/NavbarLogo.svg" alt="">
+            </div> 
+        </div>
+    </head>
+    
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>VOZILA</h2>
+                    <p>Ovde se nalazi lista svih vasih vozila.</p>
+                </div>
+                <div class="btn-wrapper">
+                    <button class="btn">
+                        <span class="btn-icon">
+                                <img src="resources/PlusIcon.svg" alt="">
+                        </span>
+                        <span class="btn-text">Dodaj vozilo</span>
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table">
+                <thead>
+                    <tr>
+                        <th>Vrsta vozila</th>
+                        <th>Model</th>
+                        <th>Registracija</th>
+                        <th>Status</th>
+                        <th>Pokreni vozilo</th>
+                        <th>Izbriši vozilo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="icon-cell"><img class="icon-vehicle-table" src="resources/MotorcycleIcon.svg" alt=""></td>
+                        <td>Aprilia SX 125</td>
+                        <td>LE-848-VB</td>
+                        <td><div class="status status-off">Vozilo nije pokrenuto</div></td>
+                        <td>
+                            <label class="switch">
+                            <input type="checkbox" id="vehicleToggle">
+                            <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td><button class="delete-btn"><img src="resources/DeleteIcon.svg" alt=""></button></td>
+                    </tr>
+                    <tr>
+                        <td class="icon-cell"><img class="icon-vehicle-table" src="resources/CarIcon.svg" alt=""></td>
+                        <td>Audi A5</td>
+                        <td>BG-651-MP</td>
+                        <td><div class="status status-off">Vozilo nije pokrenuto</div></td>
+                        <td>
+                            <label class="switch">
+                            <input type="checkbox" id="vehicleToggle">
+                            <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td><button class="delete-btn"><img src="resources/DeleteIcon.svg" alt=""></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>    
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>INFORMACIJE U VOZILU</h2>
+                    <p>Izaberite vozilo za koje zelite da pratite</p>
+                </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
