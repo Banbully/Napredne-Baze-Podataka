@@ -54,4 +54,32 @@ export class RedisService implements OnModuleInit,OnModuleDestroy
         const data= await this.redisClient.lRange(key,startValue, stop)
         return data.map(v=>JSON.parse(v));
     }
+
+    async incr(key: string)
+    {
+        return this.redisClient.incr(key)
+    }
+
+    async incrBy(key: string, value:number)
+    {
+        return this.redisClient.incrBy(key, value);
+    }
+
+    async zAdd(key: string, score: number, member: string)
+    {
+        await this.redisClient.zAdd(key, {
+            score, value: member,
+        });
+    }
+
+    async zTop(key: string, limit=10)
+    {
+        return this.redisClient.zRangeWithScores(
+            key,
+            0,
+            limit-1,
+            {REV: true},
+        );
+    }
+
 }
