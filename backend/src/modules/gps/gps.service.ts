@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
+import { timeStamp } from "console";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { RedisService } from "src/infrastructure/redis/redis.service";
+import { GpsDTO } from "./gps.dto";
 
 function pretvoriUDan(timestamps:string)
 {
@@ -11,23 +13,66 @@ function pretvoriUDan(timestamps:string)
 export class GPSService
 {
     constructor(public readonly cass:CassandraService, public readonly red:RedisService){
-
     }
 
-    async Ruta(deviceId:string, day:string)
-    //ne znam kolko ovo lepo vraca rutu za mnogo poziva 
+    async sacuvajTacku(deviceId:string, GpsDTO: GpsDTO, timestamp: string)
     {
-        const res= await this.cass.execute() 
-    }
-
-    async predjeniPut(deviceId:string, dan:string)
-    {
-        const tacke= await this.Ruta(deviceId,dan)
-
-        let put=0
-        for(let i=1; i< tacke.l;i++)
+        if(!GpsDTO)
         {
-            put+= this.haversine()
+            return "Zao nam je doslo je do greske "
         }
+        const dan= pretvoriUDan(timestamp)
+
+        await this.cass.execute(
+            `INSERT INTO gps_by_device_day
+            (deviceId, dan, timestamp,latitude, longitude, zone, accuracy)
+            VALUES(?,?,?,?,?,?,?)`
+            ,
+            [
+                deviceId,
+                dan,
+                timestamp,
+                GpsDTO.longitude,
+                GpsDTO.longitude,
+                GpsDTO.zone,
+                GpsDTO.accuracy,
+            ]
+        )
+
+        await this.red.setJson(
+            `gps:${deviceId}:latest`,
+            GpsDTO,
+            60
+        )
     }
-}
+
+    vratiZadnjuLokaciju(deviceId: string)
+    {
+        return this.red.getJSON(`gps:${deviceId}:latest`);
+    }
+
+    async getRutuZaVozilo(deviceId:string, dan: string)
+    {
+        const rez= await this.cass.execute(
+            `SELECT timestamp, latitude, longitude FROM gps_by_device_day
+            WHERE deviceID=? AND dan=?`,
+            [
+                deviceId, dan
+            ],
+        )
+        return rez.rows;
+    }
+
+    async deleteGpsRutuZaDan(deviceId: string, dan: string)
+    {
+         const rez= await this.cass.execute(
+            `DELETE FROM gps_by_device_day
+            WHERE deviceID=? AND dan=?`,
+            [
+                deviceId, dan
+            ],
+        )
+        return {ok: true};
+    }
+
+} 
