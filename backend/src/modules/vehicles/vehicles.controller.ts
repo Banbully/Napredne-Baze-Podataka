@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { VehicleService } from "./vehicles.service";
+import { VehicleDTO } from "./vehicles.dto";
 
 @Controller("Vozila")
 export class VehicleController
@@ -10,7 +11,7 @@ export class VehicleController
     }
 
     @Post()
-    CreateVozilo(@Body() dto: any)
+    CreateVozilo(@Body() dto: VehicleDTO)
     {
         return this.service.Create(dto)
     }
@@ -45,7 +46,7 @@ export class VehicleController
         return this.service.StartujGenerisanje(deviceId, false)
     }
     
-    @Get()
+    @Get("id:Status")
     vratiStatus(@Query() deviceId: string)
     {
         return this.service.vratiStatus(deviceId)

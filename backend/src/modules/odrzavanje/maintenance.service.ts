@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { timestamp } from "rxjs";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { RedisService } from "src/infrastructure/redis/redis.service";
+import { telemetryDTO } from "../telemtrija/telemtrics.dto";
+import { json } from "stream/consumers";
 
 @Injectable()
 export class OdrzavanjeService
@@ -14,7 +16,7 @@ export class OdrzavanjeService
     }
 
     
-    async evaluate(deviceId:string, telemetry: any)
+    async evaluate(deviceId:string, telemetry: telemetryDTO)
     {
         const Obavestenje=[]
         
@@ -28,7 +30,10 @@ export class OdrzavanjeService
         await this.cass.execute(
             `INSERT INTO maintenance_predictor
             (deviceId, ts, nivo_opasnosti, risk_score, poruka)
-            VALUES(?,?,?,?,?)`
+            VALUES(?,?,?,?,?)`,
+            [
+                telemetry.deviceId, prediktor.timestamp, prediktor.level, prediktor.level, prediktor.poruka 
+            ]
         )
         
     }
@@ -84,4 +89,25 @@ export class OdrzavanjeService
         }
     }
 
+    async vratiZadnjuPredikciju(deviceId: string)
+    {
+        const rediscache= await this.redis.get(`maintenance:${deviceId}:prediction`)
+        if(rediscache)
+        {
+            return JSON.parse(rediscache)
+        }
+        else{
+            const cassRez= await this.cass.execute(`SELECT * FROM maintenance_predictor WHERE deviceId=? LIMIT 1`,[deviceId])
+            return cassRez.rows[0]
+        }
+    }
+
+    async obrisiZadnjuPredikciju(deviceId:string)
+    {
+        await this.cass.execute(`DELETE FROM maintenance WHERE deviceId=?`,
+            [deviceId]
+        )
+
+        await this.redis.del(`maintenance:${deviceId}:prediction`)
+    }
 }

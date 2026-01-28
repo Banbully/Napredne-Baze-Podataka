@@ -89,4 +89,8 @@ export class RedisService
         );
     }
 
+    async del(key:string)
+    {
+        return this.redisClient.del(key)
+    }
 }

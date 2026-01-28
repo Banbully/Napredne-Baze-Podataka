@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { ApiService } from "src/infrastructure/api/api.service";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { telemetryService } from "../telemtrija/telemetrics.service";
-import { VehicleUpdateDTO } from "./vehicles.dto";
+import { VehicleDTO, VehicleUpdateDTO } from "./vehicles.dto";
 import { RedisService } from "src/infrastructure/redis/redis.service";
 
 
@@ -14,13 +14,13 @@ export class VehicleService
 
     private timer: Record<string, NodeJS.Timeout>;
 
-    async Create(dto: any)
+    async Create(dto: VehicleDTO)
     {
         const deviceId= `vozilo_${randomUUID()}`;
 
         await this.cass.execute(
             `INSERT INTO vozila(deviceId, marka, model, gorivo, godina)VALUES(?,?,?,?,?,?)`,
-            [deviceId, dto.name, dto.marka, dto.model, dto.gorivo, dto.godina],
+            [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje],
         )
  
         
@@ -30,14 +30,15 @@ export class VehicleService
     {
         await this.cass.execute(
             `Update vozila
-            SET ime=?, marka=? , model=?, gorivo=?, godina=?
+            SET marka=? , model=?, gorivo=?, godina=?
             WHERE deviceId=?`
         ,
         [
             dto.marka,
             dto.model,
             dto.gorivo,
-            dto.godinaProizvodnje
+            dto.godinaProizvodnje,
+            deviceId
         ])
     }
 
@@ -95,6 +96,7 @@ export class VehicleService
 
     async vratiStatus(deviceId: string)
     {
-        await this.red.get(`vozila:${deviceId}:status`)
+        const status=await  this.red.get(`vozila:${deviceId}:status`)
+        return {status}
     }
 }
