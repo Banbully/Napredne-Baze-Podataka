@@ -17,21 +17,20 @@ export class OdrzavanjeService
     async evaluate(deviceId:string, telemetry: any)
     {
         const Obavestenje=[]
-        if(telemetry.sensors?.engineTemp>95)
-        {
-            const prediktor= this.predict(telemetry);
+        
+        const prediktor= this.predict(telemetry);
 
-            await this.redis.setJson(`maintenance:${deviceId}:prediction`,
-                prediktor,
-                60,
+        await this.redis.setJson(`maintenance:${deviceId}:prediction`,
+            prediktor,
+            60,
             ); 
 
-            await this.cass.execute(
-                `INSERT INTO maintenance_predictor
+        await this.cass.execute(
+            `INSERT INTO maintenance_predictor
             (deviceId, ts, nivo_opasnosti, risk_score, poruka)
             VALUES(?,?,?,?,?)`
-            )
-        }
+        )
+        
     }
 
     private predict(telemtry: any)
@@ -84,4 +83,5 @@ export class OdrzavanjeService
             return "UPOZORENJE! DOSLO JE DO MALIH PROMENA KOD AUTOMOBILA"
         }
     }
+
 }

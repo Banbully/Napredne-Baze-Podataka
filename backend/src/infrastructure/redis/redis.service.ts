@@ -1,20 +1,18 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { createClient, RedisClientType } from "redis";
 @Injectable()
-export class RedisService implements OnModuleInit,OnModuleDestroy
+export class RedisService
 {
     private redisClient: RedisClientType;
 
-    async onModuleInit() {
+    constructor() {
         this.redisClient= createClient({
             socket:{host: "127.0.0.1", port: 6379},
         });
-        await this.redisClient.connect();
-    }
-    async onModuleDestroy() {
-        await this.redisClient.quit()
+        this.redisClient.connect();
     }
 
+    //wrapperi da ne pravimo client svaki put
     setJson(key:string, value:any, tt1?:number)
     {
         return tt1?this.redisClient.set(key, JSON.stringify(value), {EX: tt1})
@@ -27,6 +25,15 @@ export class RedisService implements OnModuleInit,OnModuleDestroy
         return value? JSON.parse(value): null;
     }
 
+    async get(key:string)
+    {
+        return this.redisClient.get(key);
+    }
+
+    async set(key:string, value: string)
+    {
+        return this.redisClient.set(key, value);
+    }
     //za heshiranje
     hset(key:string, field: string, value:number| string)
     {

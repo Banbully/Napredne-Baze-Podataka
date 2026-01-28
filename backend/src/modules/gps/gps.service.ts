@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { timeStamp } from "console";
-import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { RedisService } from "src/infrastructure/redis/redis.service";
+import { CassandraService } from "../../infrastructure/cassandra/cassandra.service";
 import { GpsDTO } from "./gps.dto";
 
 function pretvoriUDan(timestamps:string)
@@ -13,6 +12,7 @@ function pretvoriUDan(timestamps:string)
 export class GPSService
 {
     constructor(public readonly cass:CassandraService, public readonly red:RedisService){
+        
     }
 
     async sacuvajTacku(deviceId:string, GpsDTO: GpsDTO, timestamp: string)
@@ -55,7 +55,7 @@ export class GPSService
     {
         const rez= await this.cass.execute(
             `SELECT timestamp, latitude, longitude FROM gps_by_device_day
-            WHERE deviceID=? AND dan=?`,
+            WHERE deviceId=? AND dan=?`,
             [
                 deviceId, dan
             ],
@@ -67,12 +67,13 @@ export class GPSService
     {
          const rez= await this.cass.execute(
             `DELETE FROM gps_by_device_day
-            WHERE deviceID=? AND dan=?`,
+            WHERE deviceId=? AND dan=?`,
             [
                 deviceId, dan
             ],
         )
         return {ok: true};
     }
+
 
 } 
