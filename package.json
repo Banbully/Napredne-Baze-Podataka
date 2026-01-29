@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@nestjs/config": "^4.0.2",
-    "cassandra-driver": "^4.8.0",
-    "redis": "^5.10.0"
-  }
-}
