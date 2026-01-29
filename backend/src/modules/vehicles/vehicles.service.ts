@@ -5,6 +5,7 @@ import { CassandraService } from "src/infrastructure/cassandra/cassandra.service
 import { telemetryService } from "../telemtrija/telemetrics.service";
 import { VehicleDTO, VehicleUpdateDTO } from "./vehicles.dto";
 import { RedisService } from "src/infrastructure/redis/redis.service";
+import { escape } from "querystring";
 
 
 @Injectable()
@@ -19,18 +20,21 @@ export class VehicleService
         const deviceId= `vozilo_${randomUUID()}`;
 
         await this.cass.execute(
-            `INSERT INTO vozila(deviceId, marka, model, gorivo, godina)VALUES(?,?,?,?,?,?)`,
-            [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje],
+            `INSERT INTO vozila(deviceId, marka, model, gorivo,godina, boja, registracija)VALUES(?,?,?,?,?,?,?)`,
+            [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje,dto.boja, dto.registracija],
         )
- 
-        
+
+        await this.red.setJson(`vehicles:${deviceId}:info`, dto,86400);
+
+        await this.red.sadd(`vozila:list`, deviceId);
+
     }
 
     async UpdateVozilo(deviceId: string, dto: VehicleUpdateDTO)
     {
         await this.cass.execute(
-            `Update vozila
-            SET marka=? , model=?, gorivo=?, godina=?
+            `UPDATE vozila
+            SET marka=? , model=?, gorivo=?, godina=?, boja=?, registracija=?
             WHERE deviceId=?`
         ,
         [
@@ -38,8 +42,11 @@ export class VehicleService
             dto.model,
             dto.gorivo,
             dto.godinaProizvodnje,
+            dto.boja,
+            dto.registracija,
             deviceId
         ])
+        await this.red.setJson(`vehicles:${deviceId}:info`, dto)
     }
 
     
@@ -53,18 +60,39 @@ export class VehicleService
             id
         ],)
 
+        await Promise.all([
+            this.red.del(`vehicle:${id}:info`),
+            this.red.del(`vozila:${id}:status`),
+            this.red.sRem(`vehicles:list`, id)
+        ]);
+
         return {ok: true}
+        
     }
     
     async VratiSvaVozila()
     {
         const res=await this.cass.execute(
             `SELECT * from vozila
-            LIMIT=50`
+            LIMIT 50`
         )
         return res.rows;
     }
 
+    async VratiVoziloPoId(deviceId:string)
+    {
+        const kesiran= await this.red.getJSON(`vehicles:${deviceId}:info`)
+        if(kesiran)
+        {
+            return kesiran
+        }
+        const res= await this.cass.execute(`SELECT * from vozila WHERE deviceId=?`,[deviceId])
+        if(res.rowLength===0)
+        {
+            throw Error("Zao nam je vozila ne postoji")
+        }
+        return res.rows;
+    }
     async StartujGenerisanje(deviceId:string, isStated: boolean)
     {
         if(isStated)
@@ -94,9 +122,34 @@ export class VehicleService
         }
     }
 
+    async vratiVozilaPoMarci(marka:string)
+    {
+        const res= await this.cass.execute(`SELECT * FROM vozila WHERE marka=?` ,[marka],)
+        return res.rows;
+    }
+
+    async vratiVozilaPoModelu(marka:string, model:string)
+    {
+        const res= await this.cass.execute(`SELECT * FROM vozila WHERE marka=? and model=?` ,[model],)
+        return res.rows;
+    }
+
+    async vratiNovijaVozilaOd(godina:string)
+    {
+        const res= await this.cass.execute(`SELECT * FROM vozila WHERE godina>=?` ,[godina],)
+        return res.rows;
+    }
+
+    async vratiVozilaSaRegOd(datum:string)
+    {
+        const res= await this.cass.execute(`SELECT FROM vozila WHERE registracija>=?`,[datum])
+        return res.rows;
+    }
     async vratiStatus(deviceId: string)
     {
         const status=await  this.red.get(`vozila:${deviceId}:status`)
         return {status}
     }
+
+
 }
