@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { RedisService } from "src/infrastructure/redis/redis.service";
 import { NotificationService } from "../notifikacije/notifications.service";
@@ -20,32 +20,33 @@ export class AlertsService{
         if(telemtrija.batteryLevel<10)
         {
             Upozorenja.push({
-               deviceId:telemtrija.deviceId,code: "SlabaBaterija", severity:"Visoka opasnost", message:"Nivo baterije je slab proverite bateriju",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "SlabaBaterija", severity:"Visoka opasnost", message:"Nivo baterije je slab proverite bateriju",timestamp: new Date().toISOString(),reseno:false})
         }
 
         if(telemtrija.sensors?.engineTemp>95)
         {
             Upozorenja.push({
-               deviceId:telemtrija.deviceId,code: "Velika Temperatura motora", severity:"Visoka opasnost", message:"Velika Temperatura Motora proverite!!",timestamp: new Date().toISOString(),reseno:false});
+               deviceId:deviceId,code: "Velika Temperatura motora", severity:"Visoka opasnost", message:"Velika Temperatura Motora proverite!!",timestamp: new Date().toISOString(),reseno:false});
         }
 
         if(telemtrija.sensors?.dtcCode)
         {
             Upozorenja.push({
-               deviceId:telemtrija.deviceId,code: "TEHNICKIPROBLEM", severity:"Visoka opasnost", message:"Hitno proverite vasa kola",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "TEHNICKIPROBLEM", severity:"Visoka opasnost", message:"Hitno proverite vasa kola",timestamp: new Date().toISOString(),reseno:false})
         }
         if(telemtrija.sensors?.engineRPM>15000)
         {
              Upozorenja.push({
-               deviceId:telemtrija.deviceId,code: "Veliki broj obrtaja", severity:"Visoka opasnost", message:"Smanjite broj obrtaja",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "Veliki broj obrtaja", severity:"Visoka opasnost", message:"Smanjite broj obrtaja",timestamp: new Date().toISOString(),reseno:false})
         }
         if(telemtrija.sensors?.speed>130)
         {
              Upozorenja.push({
-               deviceId: telemtrija.deviceId,code: "Prebrza voznja", severity:"Visoka opasnost", message:"Smanjite brzinu",timestamp: new Date().toISOString(),reseno:false})
+               deviceId: deviceId,code: "Prebrza voznja", severity:"Visoka opasnost", message:"Smanjite brzinu",timestamp: new Date().toISOString(),reseno:false})
         }
 
         return Upozorenja;
+
     }  
     
     async izmeniUpozorenje(upozorenjeId: string, a: alertsUpdateDTO)
@@ -109,17 +110,51 @@ export class AlertsService{
                 a.message
             ]
         );
+        Promise.all([
+            await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
+            
+        ])
+        
 
-        await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400);
+    }
 
+    async vratiUpozorenjaPoId(upozorenjeId: string)
+    {
+        try{
+            const cached = await this.red.getJSON(`alerts:${upozorenjeId}`)
+            if(cached)
+                return cached
+
+            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE upozorenjeId=?', [upozorenjeId])
+            if(res.rowLength===0)
+            {
+                return null
+            }
+
+            await this.red.setJson(`alerts:${upozorenjeId}`, res.rows[0], 86400)
+
+            return res.rows[0]
+        }
+        catch(err)
+        {
+            throw new HttpException("Greska pri vracanju upozorena", HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
     async vratiUpozorenjaPosleDana(deviceId: string, dan: string)
     {
         const pretvoriUTS= new Date(dan).toISOString()
-         try{
-        const res= await this.cass.execute(`SELECT * upozorenja WHERE deviceId=? and timestamp<=?`, [deviceId, pretvoriUTS])
-        return res.rows;
+         try
+        {
+            const cached= await this.red.getJSON(`alerts:${deviceId}:active`)
+            if(cached)
+            {
+                return cached;
+            }
+
+            
+            const res= await this.cass.execute(`SELECT * upozorenja WHERE deviceId=? and timestamp<=?`, [deviceId, pretvoriUTS])
+            return res.rows;
         }
         catch(err){
             throw new Error("Zao nam je doslo je do greske")
@@ -171,24 +206,33 @@ export class AlertsService{
             await this.sacuvajUpozorenja(deviceId, upozorenje)
         }
     }
-    async obrisiUpozorenja(alertId:string)
+
+    async obrisiUpozorenja(upozorenjeId:string)
     {
+        try{
+        
+        const upozorenje= await this.vratiUpozorenjaPoId(upozorenjeId)
+        if (!upozorenje) {
+            return { ok: false, message: "Upozorenje nije pronađeno" };
+        }
         await this.cass.execute(
-        `DELETE FROM upozorenja WHERE alertId=?`,
+        `DELETE FROM upozorenja WHERE upozorenjeId=?`,
         [
-            alertId
+            upozorenjeId
         ]
         );
+
+        await Promise.all([
+            await this.red.del(`alerts:${upozorenjeId}`),
+            await this.red.zRem(`alerts:active`, upozorenjeId)
+        ])
         return {ok: true}; 
     }
-
-    async vratiUpozorenjaPoId(upozorenjeId: string){
-        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE upozorenjeId=?`,[upozorenjeId])
-        if(res.rowLength===0)
-        {
-            return null;
-        }
-
-        return res.rows
+    catch(error)
+    {
+        console.log(error)
     }
+    }
+
+
 }

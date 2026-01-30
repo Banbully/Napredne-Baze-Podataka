@@ -8,6 +8,8 @@ export class ApiController {
 
   @Get()
   async test() {
-    return this.api.fetchFromAPi();
+    const test=await  this.api.fetchFromAPi();
+    console.log(test)
+    return this.test;
   }
 }

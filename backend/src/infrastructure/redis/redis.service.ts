@@ -25,56 +25,61 @@ export class RedisService
         return value? JSON.parse(value): null;
     }
 
+    async keys(key:string)
+    {
+        return await this.redisClient.keys(key)
+    }
+
     async get(key:string)
     {
-        return this.redisClient.get(key);
+        return await this.redisClient.get(key);
     }
 
     async set(key:string, value: string)
     {
-        return this.redisClient.set(key, value);
+        return await this.redisClient.set(key, value);
     }
     //za heshiranje
-    hset(key:string, field: string, value:number| string)
+    async hset(key:string, field: string, value:number| string)
     {
-        return this.redisClient.hSet(key, field, value.toString());
+        return await this.redisClient.hSet(key, field, value.toString());
     }
 
-    hGetAllHash(key: string)
+    async hGetAllHash(key: string)
     {
-        return this.redisClient.hGetAll(key);
+        return await this.redisClient.hGetAll(key);
     }
 
-    hDel(key:string, field:string)
+    async hDel(key:string, field:string)
     {
-        return this.redisClient.hDel(key , field)
+        return await this.redisClient.hDel(key , field)
     }
 
-    lPush(key: string, value: number)
+    async lPush(key: string, value: number)
     {
-        return this.redisClient.lPush(key, JSON.stringify(value));
+        return await this.redisClient.lPush(key, JSON.stringify(value));
     
     }
     
     async getInrange(key: string, startValue=0, stop=20)
     {
         const data= await this.redisClient.lRange(key,startValue, stop)
-        return data.map(v=>JSON.parse(v));
+        return await data.map(v=>JSON.parse(v));
     }
 
     async incr(key: string)
     {
-        return this.redisClient.incr(key)
+        return await this.redisClient.incr(key)
     }
 
     async incrBy(key: string, value:number)
     {
-        return this.redisClient.incrBy(key, value);
+        return await this.redisClient.incrBy(key, value);
     }
 
     async zAdd(key: string, score: number, member: string)
     {
-        await this.redisClient.zAdd(key, {
+        return await this.redisClient.zAdd(key, {
             score, value: member,
         });
     }
@@ -91,16 +96,46 @@ export class RedisService
 
     async del(key:string)
     {
-        return this.redisClient.del(key)
+        return await this.redisClient.del(key)
     }
 
     async sadd(key:string, member: string)
     {
-        return this.redisClient.sAdd(key, member)
+        return await this.redisClient.sAdd(key, member)
     }
 
     async sRem(key: string, member: string)
     {
-        return this.redisClient.sRem(key, member)
+        return await this.redisClient.sRem(key, member)
+    }
+
+    async lTrim(key:string, start:number, stop:number)
+    {
+        return await this.redisClient.lTrim(key, start, stop);
+    }
+
+    async expire(key:string, second:number)
+    {
+        return await this.redisClient.expire(key, second)
+    }
+
+    async exists(key:string)
+    {
+        return await this.redisClient.exists(key)
+    }
+
+    async zRem(key:string, member:string)
+    {
+        return await this.redisClient.zRem(key, member)
+    }
+
+    async lRange(key:string, start:number, stop: number)
+    {
+        return await this.redisClient.lRange(key, start, stop)
+    }
+
+    async lRem(key:string, count:number, element:any)
+    {
+        return await this.redisClient.lRem(key, count, element)
     }
 }
