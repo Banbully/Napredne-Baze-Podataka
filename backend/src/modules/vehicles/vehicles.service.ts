@@ -19,8 +19,8 @@ export class VehicleService
         const deviceId= `vozilo_${randomUUID()}`;
 
         await this.cass.execute(
-            `INSERT INTO vozila(deviceId, marka, model, gorivo, godina)VALUES(?,?,?,?,?,?)`,
-            [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje],
+            `INSERT INTO vozila(deviceId, marka, model, gorivo, godina, boja, registracija)VALUES(?,?,?,?,?,?,?)`,
+            [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje,dto.boja, dto.registracija],
         )
  
         
@@ -60,7 +60,7 @@ export class VehicleService
     {
         const res=await this.cass.execute(
             `SELECT * from vozila
-            LIMIT=50`
+            LIMIT 50`
         )
         return res.rows;
     }

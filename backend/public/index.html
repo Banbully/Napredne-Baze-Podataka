@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrailMetrics</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <head class="navbar">
+        <div class="container nav-logo-wrapper">
+            <div class="nav-logo">
+                <img src="resources/NavbarLogo.svg" alt="">
+            </div> 
+        </div>
+    </head>
+    
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>VOZILA</h2>
+                    <p>Ovde se nalazi lista svih vasih vozila.</p>
+                </div>
+                <div class="btn-wrapper">
+                    <button id="insert-vehicle-btn" class="btn">
+                        <span class="btn-icon">
+                                <img src="resources/PlusIcon.svg" alt="">
+                        </span>
+                        <span class="btn-text">Dodaj vozilo</span>
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table">
+                <thead>
+                    <tr>
+                        <th>Vrsta vozila</th>
+                        <th>Model</th>
+                        <th>Registracija</th>
+                        <th>Status</th>
+                        <th>Pokreni vozilo</th>
+                        <th>Izbriši vozilo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>    
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>INFORMACIJE U VOZILU</h2>
+                    <p>Izaberite vozilo za koje zelite da pratite</p>
+                </div>
+            </div>
+            <div class="vehcile-info-wrapper">
+                <div class="vehicle-info-left" id="vehicleList">
+
+                    <div class="vehicle-item">
+                        <div class="vehicle-item-name">
+                            <img class="icon-vehicle-table" src="resources/Purple-CarIcon.svg" alt="">
+                            <p class="vehicle-item-type r-m">Mercedes</p>
+                            <p class="vehicle-item-type">A Class</p>
+                        </div>
+                        <p class="vehicle-item-id">LE-848-VB</p>
+                    </div>
+                  <div class="vehicle-item active">
+                        <div class="vehicle-item-name">
+                            <img class="icon-vehicle-table" src="resources/Purple-CarIcon.svg" alt="">
+                            <p class="vehicle-item-type">Audi A5</p>
+                        </div>
+                        <p class="vehicle-item-id">BG-514-AC</p>
+                    </div>
+
+
+                </div>
+                <div class="vehicle-info-right">
+                    <div class="decoration-circle"></div>
+                    <div class="vehicle-general">
+                        <div class="general-upper">
+                            <h3 class="general-name">Audi A5</h3>
+                            <div class="status status-off">Vozilo nije pokrenuto</div>
+                        </div>
+                        <p class="general-id">BG-514-AC</p>
+                    </div>
+                    <div class="vehicle-metrics">
+                        <div class="left-metrics">
+                            <div class="metric-info">
+                                <p class="metric-heading">Brzina</p>
+                                <p class="metric-value">80 Km/h</p>
+                            </div>
+                                <div class="metric-info">
+                                <p class="metric-heading">Nivo ulja</p>
+                                <p class="metric-value">70%</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Kilometraza</p>
+                                <p class="metric-value">125 215km</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Gorivo</p>
+                                <p class="metric-value">10 l</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Temperatura</p>
+                                <p class="metric-value">50 C</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Obrtaji motora</p>
+                                <p class="metric-value">3000</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Trenutna lokacija</p>
+                                <p class="metric-value">Aleksadnra Medvedeva 14, Nis</p>
+                            </div>
+                        </div>
+
+                        <div class="decoration-line"></div>
+
+                        <div class="right-metrics">
+                                <div class="right-metrics-info">
+                                    <div class="metric-info">
+                                        <p class="metric-heading">Do malog servisa</p>
+                                        <p class="metric-value">5000 km</p>
+                                    </div>
+                                    <div class="metric-info">
+                                        <p class="metric-heading">Do velikog servisa</p>
+                                        <p class="metric-value">21000 km</p>
+                                    </div>
+                                </div>
+
+                                <div class="metric-buttons-wrapper">
+                                    <button class="btn ghost-button">Istorija servisa</button>
+                                    <button class="btn">Servisiraj vozilo</button>
+                                </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="pre-table center-p-t">
+                <div class="h2-wrapper">
+                    <h2>LEADERBOARD</h2>
+                    <p>Rangirajte vozila po vasem kriterijumu</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <img src="resources/FooterLogo.svg" alt="">
+        </div>
+    </footer>
+
+   <div class="modal-overlay">
+    <form id="vehicle-insert-form">
+        <div class="modal">
+            <h2>UNESITE VOZILO</h2>
+            <div class="insert-vehicle-inputs-wrapper">
+                <input id="v-marka" type="text" placeholder="Marka">
+                <input id="v-model" type="text" placeholder="Model">
+                <input id="v-boja" type="text" placeholder="Boja">
+                <input id="v-godina" type="number" placeholder="Godina Proizvodnje">
+                <input id="v-gorivo" type="text" placeholder="Gorivo">
+                <input id="v-reg" type="text" placeholder="Registracija">
+            </div>
+            <div class="vehicle-insert-buttons-wrapper">
+                <button type="submit" class="btn center" id="vehicle-insert-btn-close">Posalji</button>
+                <button type="button" class="btn center ghost-button form" id="cancel-button">Otkazi</button>
+            </div>    
+        </div>
+    </form>
+  </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

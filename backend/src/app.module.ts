@@ -1,3 +1,5 @@
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,8 +15,26 @@ import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { notificationmodule } from './modules/notifikacije/notifications.module';
 import { GPSModule } from './modules/gps/gps.module';
 
+
 @Module({
-  imports: [ConfigModule.forRoot(),ApiModule,RedisModule, CassandraModule, VehicleModule, OdrzavanjeModule, telemetryModule, AlertsModule,LeaderboardModule,notificationmodule, GPSModule, ],
+  imports: [
+    ConfigModule.forRoot(),
+
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+    }),
+
+    ApiModule,
+    RedisModule,
+    CassandraModule,
+    VehicleModule,
+    OdrzavanjeModule,
+    telemetryModule,
+    AlertsModule,
+    LeaderboardModule,
+    notificationmodule,
+    GPSModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
