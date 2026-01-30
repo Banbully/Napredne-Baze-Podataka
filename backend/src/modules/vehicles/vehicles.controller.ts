@@ -52,4 +52,10 @@ export class VehicleController
         return this.service.vratiStatus(deviceId)
     }
 
+    @Get(":id")
+    vratiVoziloPoId(@Param('id') deviceId: string)
+    {
+        return this.service.VratiVoziloPoId(deviceId)
+    }
+
 }

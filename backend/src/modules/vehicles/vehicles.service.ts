@@ -79,20 +79,19 @@ export class VehicleService
         return res.rows;
     }
 
-    async VratiVoziloPoId(deviceId:string)
+    async VratiVoziloPoId(deviceId: string) 
     {
-        const kesiran= await this.red.getJSON(`vehicles:${deviceId}:info`)
-        if(kesiran)
-        {
-            return kesiran
+        const kesiran = await this.red.getJSON(`vehicles:${deviceId}:info`);
+        if (kesiran) {
+            return kesiran;
         }
-        const res= await this.cass.execute(`SELECT * from vozila WHERE deviceId=?`,[deviceId])
-        if(res.rowLength===0)
-        {
-            throw Error("Zao nam je vozila ne postoji")
+        const res = await this.cass.execute(`SELECT * from vozila WHERE deviceId=?`, [deviceId]);
+        if (res.rowLength === 0) {
+            throw Error("Zao nam je vozila ne postoji");
         }
-        return res.rows;
+        return res.rows[0]; 
     }
+    
     async StartujGenerisanje(deviceId:string, isStated: boolean)
     {
         if(isStated)

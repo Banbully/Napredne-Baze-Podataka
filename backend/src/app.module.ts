@@ -15,7 +15,9 @@ import { AlertsModule } from './modules/upozorenja/alerts.module';
 import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { notificationmodule } from './modules/notifikacije/notifications.module';
 import { GPSModule } from './modules/gps/gps.module';
+
 import { ServisModule } from './modules/servisi/servis.module';
+
 
 
 @Module({
@@ -36,6 +38,7 @@ import { ServisModule } from './modules/servisi/servis.module';
     LeaderboardModule,
     notificationmodule,
     GPSModule,
+    ServisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

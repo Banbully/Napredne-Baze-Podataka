@@ -135,7 +135,7 @@
 
                                 <div class="metric-buttons-wrapper">
                                     <button class="btn ghost-button">Istorija servisa</button>
-                                    <button class="btn">Servisiraj vozilo</button>
+                                    <button class="btn" id="servis-open">Servisiraj vozilo</button>
                                 </div>
                         </div>
                     </div>
@@ -163,7 +163,7 @@
     </footer>
 
    <div class="modal-overlay">
-    <form id="vehicle-insert-form">
+    <form id="vehicle-insert-form" class="modal-form">
         <div class="modal">
             <h2>UNESITE VOZILO</h2>
             <div class="insert-vehicle-inputs-wrapper">
@@ -180,6 +180,31 @@
             </div>    
         </div>
     </form>
+
+    <form id="vehicle-servis-form" class="modal-form">
+        <div class="modal">
+            <h2>SERVISIRAJTE VOZILO</h2>
+            <div class="insert-vehicle-inputs-wrapper">
+                    <select id="s-tip" required>
+                        <option value="" disabled selected>Tip servisa</option>
+                        <option value="Mali servis">Mali servis</option>
+                        <option value="Veliki servis">Veliki servis</option>
+                        <option value="Servis guma">Servis guma</option>
+                        <option value="Servis klime">Servis klime</option>
+                        <option value="Servis elektronike">Servis elektronike</option>
+                    </select>
+
+                    <input id="s-majstor" type="text" placeholder="Ime majstora" required>
+                    <input id="s-datum" type="date" required>
+                    <input id="s-cena" type="number" placeholder="Cena servisa" min="0" step="0.01" required>
+                </div>
+                <div class="vehicle-insert-buttons-wrapper">
+                    <button type="submit" class="btn center" id="servis-submit">Sačuvaj servis</button>
+                    <button type="button" class="btn center ghost-button form" id="cancel-button">Otkaži</button> 
+                </div>
+        </div>
+    </form>
+
   </div>
 
     <script src="js/script.js"></script>
