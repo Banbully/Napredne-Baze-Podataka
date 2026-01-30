@@ -9,14 +9,14 @@ export class ApiService
     {
         const API="https://api.datamock.dev/v1/iot-telemetry?quantity=1&deviceType=vehicle_telematics_unit&status=online&exclude=deviceId,sessionId,deviceType,firmwareVersion,ipAddress,macAddress,signalStrength,networkType,cpuUsage,memoryUsage,sensors.gpsLat,sensors.gpsLon"
         // const ApiURL=process.env.;
-        const res= await fetch(API)
+        const res= await fetch("https://api.datamock.dev/v1/iot-telemetry?quantity=1&deviceType=vehicle_telematics_unit&status=online&exclude=deviceId,sessionId,deviceType,firmwareVersion,ipAddress,macAddress,signalStrength,networkType,cpuUsage,memoryUsage,sensors.gpsLat,sensors.gpsLon")
         if(res!.ok)
         {
             throw new Error("GRESKA! Zao nam je doslo je do greske prilikom poziva api")
         }
 
         const json= await res.json()
-        return json.data[0]
+        return json;
     }
 
     mapirajApi(apiPodaci:any, deviceId: string)

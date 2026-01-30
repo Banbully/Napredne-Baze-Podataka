@@ -93,4 +93,14 @@ export class RedisService
     {
         return this.redisClient.del(key)
     }
+
+    async sadd(key:string, member: string)
+    {
+        return this.redisClient.sAdd(key, member)
+    }
+
+    async sRem(key: string, member: string)
+    {
+        return this.redisClient.sRem(key, member)
+    }
 }

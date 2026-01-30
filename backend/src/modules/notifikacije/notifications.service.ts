@@ -29,7 +29,7 @@ export class NotificationService
 
     obrisi(deviceId:string)
     {
-        // return this.red.hDel(`notifications:${deviceId}`, )
+        return this.red.hDel(`notifications:${deviceId}`, deviceId)
     }
 
 }

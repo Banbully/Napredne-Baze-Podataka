@@ -23,7 +23,7 @@ export class GPSController{
 
     @Put('savePut')
     sacuvajPut(@Body()body:{deviceId:string, GPSDTO: GpsDTO, timestamp: string}){
-        return this.service.sacuvajTacku(body.deviceId, body.GPSDTO, body.timestamp)
+        return this.service.sacuvajTacku(body.deviceId, body.GPSDTO)
     }
 
     @Delete('ObrisiZaDan')
