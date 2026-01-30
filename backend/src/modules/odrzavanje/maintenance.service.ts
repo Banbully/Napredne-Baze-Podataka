@@ -14,8 +14,6 @@ export class OdrzavanjeService
     {
 
     }
-
-    
     async evaluate(deviceId:string, telemetry: telemetryDTO)
     {
         const Obavestenje=[]
@@ -37,7 +35,8 @@ export class OdrzavanjeService
         )
 
         Promise.all([
-            
+            await this.redis.setJson(`maintenance:${deviceId}:predictor`, JSON.stringify(telemetry),86400),
+            await this.redis.sadd(`maintenance_predictor:${deviceId}`, JSON.stringify(telemetry))
         ])
         
 
@@ -80,7 +79,7 @@ export class OdrzavanjeService
 
 
 
-    async healthScoreZaVozilo(telemtry: any)
+    async healthScoreZaVozilo(telemtry: any, deviceId: string)
     {
         let healthCheck=100;
         if(telemtry.sensors?.engineTemp>95) 
@@ -98,18 +97,23 @@ export class OdrzavanjeService
         if(telemtry.sensors?.odometar>150000) 
             healthCheck-=0.1;
         if(telemtry.sensors?.fuelLevel<20) 
-            healthCheck+=0.1;
+            healthCheck-=0.1;
         if(telemtry.sensors?.fuelLevel<10) 
-            healthCheck+=0.1;
+            healthCheck-=0.1;
         if(telemtry.sensors?.dtcCode) 
-            healthCheck+=0.1;
+            healthCheck-=100;
 
-        const score= healthCheck>60? 'HIGH':
-        healthCheck>30? 'MED':'LOW'
-        await this.redis.setJson(`HEALTH_SCORE`, healthCheck, 86400);
+
+         const level= healthCheck>90? 'Odlican':
+        healthCheck>60? 'Zadovoljavajuc':'Los'
+
+        await this.redis.setJson(`HEALTH_SCORE:${deviceId}`, healthCheck, 86400);
 
         return{
+            level,
             score: healthCheck,
+            timestamp: new Date().toISOString()
+            
         }
     }
     async vratiPoruku(level: string)
@@ -148,4 +152,16 @@ export class OdrzavanjeService
         )
         await this.redis.del(`maintenance:${deviceId}:prediction`)
     }
+
+    async resetPrediktorURedis(deviceId: string)
+    {
+         const rediscache= await this.redis.get(`maintenance:${deviceId}:prediction`)
+        if(rediscache)
+        {
+            return JSON.parse(rediscache)
+        }
+        await this.redis.setJson(`maintenance:${deviceId}:prediction`,0, 86400);
+
+    }
+
 }

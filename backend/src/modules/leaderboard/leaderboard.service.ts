@@ -38,16 +38,16 @@ export class LeaderboardService{
         if(data.sensors?.speed && data.sensors?.speed > 0) {
             await this.red.zAdd(`leaderboard:speed`, data.sensors?.speed, deviceId );
         }
-        else if (data.sensors?.odometar && data.sensors?.odometar > 0) {
-            await this.red.zAdd(`leaderboard:odmetar`, data.sensors?.odometar, deviceId );
+        if (data.sensors?.odometar && data.sensors?.odometar > 0) {
+            await this.red.zAdd(`leaderboard:odometar`, data.sensors?.odometar, deviceId );
         }
-        else if (data.sensors?.temp && data.sensors?.temp > 0) {
+        if (data.sensors?.temp && data.sensors?.temp > 0) {
             await this.red.zAdd(`leaderboard:temp`, data.sensors?.temp, deviceId );
         }
-        else if (data.sensors?.engineRpm && data.sensors?.engineRpm> 0) {
+        if (data.sensors?.engineRpm && data.sensors?.engineRpm> 0) {
             await this.red.zAdd(`leaderboard:engineRpm`, data.sensors?.engineRpm, deviceId );
         }
-        else (data.sensors?.fuelLevel && data.sensors?.fuelLevel > 0)
+        if (data.sensors?.fuelLevel && data.sensors?.fuelLevel > 0)
         {
             await this.red.zAdd(`leaderboard:fuel`, data.sensors?.fuelLevel, deviceId );
         }
@@ -64,8 +64,6 @@ export class LeaderboardService{
         await this.red.zAdd(`leaderboard:${parametar}`,0, deviceId)
     }
 
-
-    
     async updateLeaderboardOdometar(deviceId: string, data:any,daily:boolean)
     {
         const odometar = data.sensors?.odometar || 0;
@@ -102,11 +100,12 @@ export class LeaderboardService{
             await this.red.zAdd(`leaderboard:engineRpm`, engineRPM, deviceId );
         }
     }
-    async updateLeaderboardTemp(deviceId: string, data:any, daily:boolean)
+    async updateLeaderboardTemp(deviceId: string, data:any ,daily:boolean)
     {
+        const dan = new Date().toISOString().slice(0,10)
         const temp = data.sensors?.temp || 0;
         if (temp > 0) {
-            await this.red.zAdd(`leaderboard:odometar`, temp, deviceId );
+            await this.red.zAdd(`leaderboard:odometar:${dan}`, temp, deviceId );
         }
     }
 

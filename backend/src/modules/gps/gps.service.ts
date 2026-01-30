@@ -15,6 +15,7 @@ export class GPSService
         
     }
 
+    
     async sacuvajTacku(deviceId:string, GpsDTO: GpsDTO)
     {
         if(!GpsDTO || GpsDTO.latitude || GpsDTO.longitude)
@@ -34,25 +35,41 @@ export class GPSService
                 deviceId,
                 dan,
                 timestamp,
-                GpsDTO.longitude,
+                GpsDTO.latitude,
                 GpsDTO.longitude,
                 GpsDTO.zone,
                 GpsDTO.accuracy,
             ]
         )
+   await Promise.all([
+    this.red.setJson(
+        `gps:${deviceId}:latest`,
+        {
+            GpsDTO,
+            timestamp,
+            deviceId
+        },
+        60
+    ),
 
-        await this.red.setJson(
-            `gps:${deviceId}:latest`,
-            {
-                GpsDTO,
-                timestamp,
-                deviceId
-            },
-            60
-        )
+    this.red.geoAdd(
+        `gps:${deviceId}:locations`,
+        GpsDTO.longitude,
+        GpsDTO.latitude,
+        deviceId
+    ),
 
+    this.red.lPush(
+        `gps:history`,
+        JSON.stringify({
+        longitude: GpsDTO.longitude,
+        latitude: GpsDTO.latitude,
+        deviceId
+     })
+    )]);
     }
 
+    
     async vratiZadnjuLokaciju(deviceId: string)
     {
         try{
@@ -103,6 +120,13 @@ export class GPSService
         }
     }
 
+    async vratiURadijusu( latitude:number, longitude:number, radius: number)
+    {
+        const res=await this.red.geoRadius(`gps:locations`, longitude, latitude, radius);
+        return res.map(r => ({
+            r
+        }));
+    }
     async vratiRutuZaPeriod(deviceId: string, start: string, kraj: string)
     {
         const rez= await this.cass.execute(`SELECT FROM gps_by_device_day WHERE deviceId=? AND dan>= ? AND dan<=? ORDER BY timestamp desc`,
@@ -115,6 +139,7 @@ export class GPSService
     }
     async deleteGpsRutuZaDan(deviceId: string, dan: string)
     {
+
          const rez= await this.cass.execute(
             `DELETE FROM gps_by_device_day
             WHERE deviceId=? AND dan=?`,
@@ -122,13 +147,18 @@ export class GPSService
                 deviceId, dan
             ],
         )
+        await this.red.del(`gps:${deviceId}:latest`)
         return rez.rows;
     }
 
     async izbrisiGPS(deviceId: string)
     {   
-        const cached= await this.red.del(`gps:${deviceId}:latest`)
-        await this.cass.execute(`DELETE FROM gps_by_device_day WHERE deviceId=?`,[deviceId])
+        await Promise.all([
+            await this.red.del(`gps:${deviceId}:latest`),
+            await this.cass.execute(`DELETE FROM gps_by_device_day WHERE deviceId=?`,[deviceId]),
+            await this.red.del(`gps:${deviceId}:latest`)
+        
+        ]);
         return{ok:true}
     }
 

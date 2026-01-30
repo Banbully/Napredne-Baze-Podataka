@@ -55,7 +55,7 @@ export class RedisService
         return await this.redisClient.hDel(key , field)
     }
 
-    async lPush(key: string, value: number)
+    async lPush(key: string, value: string)
     {
         return await this.redisClient.lPush(key, JSON.stringify(value));
     
@@ -137,5 +137,15 @@ export class RedisService
     async lRem(key:string, count:number, element:any)
     {
         return await this.redisClient.lRem(key, count, element)
+    }
+
+    async geoAdd(key:string, longitude:number, latitude:number, member:string)
+    {
+        return await this.redisClient.geoAdd(key, {latitude, longitude, member})
+    }
+
+    async geoRadius(key:string, longitude:number, latitude:number, radius:number, )
+    {
+        return await this.redisClient.geoRadius(key, {longitude, latitude}, radius,"km")
     }
 }

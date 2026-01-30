@@ -26,21 +26,4 @@ export class GrafikonDTO{
     @IsEnum(["1min", '30min', '1h', '24h']) period!: string;
 }
 
-export class DnevnaAnalitikaDTO{
-    @IsString() deviceId!:string;
-    @IsString() dan: string;
-    @IsEnum(sensorDTO) metrika!: sensorDTO;
 
-}
-
-export class MesecnaAnalitikaDTO{
-    @IsString() deviceId!:string;
-    @IsString() mesec: string;
-    @IsEnum(sensorDTO) metrika!: sensorDTO;
-}
-
-export class GodisnjaAnalitikaDTO{
-    @IsString() deviceId!:string;
-    @IsString() godina: string;
-    @IsEnum(sensorDTO) metrika!: sensorDTO;
-}

@@ -51,7 +51,7 @@ export class AlertsService{
     
     async izmeniUpozorenje(upozorenjeId: string, a: alertsUpdateDTO)
     {
-        await this.cass.execute(`UPDATE timestamp, code, severity, message FROM upozorenja SET timestamp, code, severity, message WHERE deviceId=?`,
+        await this.cass.execute(`UPDATE upozorenje SET timestamp=?, code=?, severity=?, message=?  WHERE deviceId=?`,
             [
                 a.timestamp,
                 a.code,
@@ -61,7 +61,7 @@ export class AlertsService{
             ],
         )
 
-        await this.red.del(`alerts:`)
+        await this.red.del(`alerts:${upozorenjeId}`)
 
     }
 
@@ -111,7 +111,7 @@ export class AlertsService{
             ]
         );
         Promise.all([
-            await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
+            await this.red.setJson(`alert:${upozorenjeId}`, a, 86400),
             await this.red.hset(`alert:${upozorenjeId}:aktivno`, upozorenjeId, a),
             await this.red.set(`alert:${upozorenjeId}:latest`, upozorenjeId)
         ])
@@ -141,6 +141,7 @@ export class AlertsService{
         }
     }
 
+    async 
     async vratiUpozorenjaPosleDana(deviceId: string, dan: string)
     {
         const pretvoriUTS= new Date(dan).toISOString()
@@ -151,9 +152,8 @@ export class AlertsService{
             {
                 return cached;
             }
-
             
-            const res= await this.cass.execute(`SELECT * upozorenja WHERE deviceId=? and timestamp<=?`, [deviceId, pretvoriUTS])
+            const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and timestamp<=?`, [deviceId, pretvoriUTS])
             return res.rows;
         }
         catch(err){
@@ -188,6 +188,10 @@ export class AlertsService{
         }
     }
 
+    async ResiUpozorenje(resen:boolean)
+    {
+
+    }
     async getAktivna(deviceId: string)
     {
         const cached=await this.red.getInrange(`alerts:${deviceId}`,0,50)

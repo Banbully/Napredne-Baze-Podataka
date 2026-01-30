@@ -47,7 +47,6 @@ export class telemetryService
                 data,
                 60,
             );
-
             await this.red.zAdd(`leaderboard:speed`, data.sensors?.speed, data.device_id)
             await this.red.zAdd(`leaderboard:engineRpm`, data.sensors?.engineRpm, data.device_id)
             await this.red.zAdd(`leaderboard:temp`, data.sensors?.engine_temp, data.device_id)
@@ -83,8 +82,6 @@ export class telemetryService
         }
     }
 
-    async 
-    
 
     async DeleteZaDan(deviceId: string, dan:string)
     {
@@ -97,5 +94,31 @@ export class telemetryService
         return {ok: true};        
     }
 
+
+    async vratiParametar(parametar:string, deviceId:string)
+    {
+        const cached= await this.red.get(`telemtry:${deviceId}:latest:${parametar}`)
+        if(cached)
+        {
+            return cached
+        }
+        
+        const res= await this.cass.execute(`SELECT ${parametar} FROM telemetry_by_device_day WHERE deviceId=?`,[deviceId]);
+        await this.red.set(`telemtry:${deviceId}:latest:${parametar}`, JSON.stringify(res.rows[0]));
+        return res.rows[0]
+    }
+
+     async vratiSveParametar(deviceId:string)
+    {
+        const cached= await this.red.get(`telemtry:${deviceId}:latest`)
+        if(cached)
+        {
+            return cached
+        }
+        
+        const res= await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceId=?`,[deviceId]);
+        await this.red.set(`telemtry:${deviceId}:latest`, JSON.stringify(res.rows[0]));
+        return res.rows[0]
+    }
     
 }

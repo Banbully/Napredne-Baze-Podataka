@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 import { RedisService } from "src/infrastructure/redis/redis.service";
+import { json } from "stream/consumers";
 
 @Injectable()
 export class NotificationService
@@ -17,19 +18,41 @@ export class NotificationService
             ...alert,
             read: false,
         };
-
-        await this.red.lPush(`notifications:${deviceId}`, notifikacija,);
+        const jsonNotf= JSON.stringify(notifikacija)
+        await this.red.lPush(`notifications:${deviceId}`, jsonNotf,);
+        await this.red.set(`notifications${deviceId}:latest`, notifikacija)
+        await this.red.incr(`notifications${deviceId}:aktivne`)
+        await this.red.incr(`notifications${deviceId}:neprocitane`)
         return notifikacija
     }
 
-    get(deviceId:string)
+    async get(deviceId:string)
     {
-        return this.red.getInrange(`notifications:${deviceId}`, 0 ,100);
+        const data=await  this.red.getInrange(`notifications:${deviceId}`, 0 ,100);
+        return data.map(x => JSON.parse(x));
     }
 
-    obrisi(deviceId:string)
+    async getNeprocitane(deviceId:string)
+    {
+        await this.red.get(`notifications${deviceId}:neprocitane`)
+    }
+
+    async obrisiNeprocitane(deviceId:string)
+    {
+        return this.red.del(`notifications${deviceId}:neprocitane`);
+    }
+    async obrisiHashnotifikacije(deviceId:string)
     {
         return this.red.hDel(`notifications:${deviceId}`, deviceId)
+    }
+
+    async vratiZadnju(deviceId:string)
+    {
+        const data = await this.red.get(`notifications:${deviceId}:latest`);
+
+        if (!data) return null;
+
+        return JSON.parse(data);
     }
 
 }
