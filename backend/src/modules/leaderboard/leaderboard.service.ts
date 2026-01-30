@@ -47,7 +47,7 @@ export class LeaderboardService{
         else if (data.sensors?.engineRpm && data.sensors?.engineRpm> 0) {
             await this.red.zAdd(`leaderboard:engineRpm`, data.sensors?.engineRpm, deviceId );
         }
-        else (data.sensors?.fuelLevel && data.sensors?.fuelLevel > 0) 
+        else (data.sensors?.fuelLevel && data.sensors?.fuelLevel > 0)
         {
             await this.red.zAdd(`leaderboard:fuel`, data.sensors?.fuelLevel, deviceId );
         }
@@ -133,8 +133,7 @@ export class LeaderboardService{
         {
             const deviceId=r.value;
             const res= this.cass.execute(
-                `SELECT marka, model FROM vozila WHERE deviceId=?`
-                ,
+                `SELECT marka, model FROM vozila WHERE deviceId=?`,
                 [
                     r.value
                 ],

@@ -1,5 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { timestamp } from "rxjs";
+import { GpsDTO } from "src/modules/gps/gps.dto";
+import { alertsDTO } from "src/modules/upozorenja/alerts.dto";
 
 
 @Injectable()
@@ -16,10 +18,12 @@ export class ApiService
         }
 
         const json= await res.json()
+        console.log("RAW API RESPONSE:", json) // DODAJ OVO!
+        console.log("JSON.DATA:", json.data) // DODAJ OVO!
         return json.data;
     }
 
-    mapirajApi(apiPodaci: any, deviceId: string) 
+    mapirajApi(apiPodaci: any, deviceId:string) 
     {
     return {
         deviceId,
@@ -32,5 +36,37 @@ export class ApiService
         odometer: apiPodaci.sensors?.odometer
     };
     }
+
+    mapirajLokaciju(apiPodaci: any, deviceId:string)
+    {
+    const gpsDto = new GpsDTO();
+       if (apiPodaci?.location) 
+    {
+        deviceId: deviceId;
+        gpsDto.latitude = apiPodaci.location.lat;
+        gpsDto.longitude = apiPodaci.location.lng;
+        gpsDto.zone = apiPodaci.location.zone;
+        gpsDto.accuracy = apiPodaci.location.accuracy;
+    }
+    
+    return gpsDto;
+    }
+
+     mapirajAlerts(apiPodaci: any, deviceId:string)
+    {
+    const alert = new alertsDTO();
+       if (apiPodaci?.alerts) 
+    {
+        alert.deviceId= deviceId;
+        alert.code = apiPodaci.alerts?.code;
+        alert.message = apiPodaci.alerts?.message;
+        alert.severity = apiPodaci.alerts?.severity;
+        alert.message = apiPodaci.alerts?.accuracy;
+    }
+    
+    return alert;
+    }
+
+
 
 }

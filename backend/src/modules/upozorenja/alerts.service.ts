@@ -112,10 +112,10 @@ export class AlertsService{
         );
         Promise.all([
             await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
-            
+            await this.red.hset(`alert:${upozorenjeId}:aktivno`, upozorenjeId, a),
+            await this.red.set(`alert:${upozorenjeId}:latest`, upozorenjeId)
         ])
         
-
     }
 
     async vratiUpozorenjaPoId(upozorenjeId: string)
@@ -175,6 +175,11 @@ export class AlertsService{
     async vratiSvaUpozorenjaZaUredjaj(deviceId:string)
     {
         try{
+        const cached= await this.red.getJSON(`alert:${deviceId}`)
+        if(cached)
+        {
+            return cached
+        }
         const res= await this.cass.execute("SELECT * upozorenja WHERE deviceId=?", [deviceId])
         return res.rows;
         }
@@ -233,6 +238,7 @@ export class AlertsService{
         console.log(error)
     }
     }
+
 
 
 }
