@@ -18,7 +18,7 @@ export class telemtryController{
     @Get(`:deviceId/latest`)
     latest(@Param(`deviceId`) id:string)
     {
-        return this.telemtry.vratiHashovano(id)
+        // return this.telemtry.vratiHashovano(id)
     }
 
     @Delete()

@@ -59,20 +59,32 @@ export class telemetryService
             
             return{ok : true}
         } 
+
         
         
     }
 
     async vratiVozilo(deviceId: string)
     {
+        try{
+        const cached= await this.red.getJSON(`telemtry:${deviceId}:latest`)
+        if(cached)
+        {
+            return cached
+        }
+        
         const res=await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceId=?`, [deviceId],)
+        await this.red.setJson(`telemtry:${deviceId}:latest`,res.rows[0], 86400)
         return res.rows[0];
+        }
+        catch(err)
+        {
+            console.log(err)
+        }
     }
 
-    async vratiHashovano(deviceId: string)
-    {
-        return this.red.getJSON(`telemtry:${deviceId}:latest`)
-    }
+    async 
+    
 
     async DeleteZaDan(deviceId: string, dan:string)
     {

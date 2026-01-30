@@ -35,10 +35,15 @@ export class OdrzavanjeService
                 telemetry.deviceId, prediktor.timestamp, prediktor.level, prediktor.level, prediktor.poruka 
             ]
         )
+
+        Promise.all([
+            
+        ])
         
+
     }
 
-    private predict(telemtry: any)
+    private  predict(telemtry: any)
     {
         let score=0;
         if(telemtry.sensors?.engineTemp>95) 
@@ -64,8 +69,8 @@ export class OdrzavanjeService
 
         const level= score>60? 'HIGH':
         score>30? 'MED':'LOW'
-
-        return{
+       
+        return{  
             level,
             score: score,
             poruka: this.vratiPoruku(level),
@@ -73,6 +78,40 @@ export class OdrzavanjeService
         }
     }
 
+
+
+    async healthScoreZaVozilo(telemtry: any)
+    {
+        let healthCheck=100;
+        if(telemtry.sensors?.engineTemp>95) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.engineTemp>95) 
+            healthCheck-=0.2;
+        if(telemtry.sensors?.batteryLevel<30) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.batteryLevel<15) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.odometar>50000) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.odometar>100000) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.odometar>150000) 
+            healthCheck-=0.1;
+        if(telemtry.sensors?.fuelLevel<20) 
+            healthCheck+=0.1;
+        if(telemtry.sensors?.fuelLevel<10) 
+            healthCheck+=0.1;
+        if(telemtry.sensors?.dtcCode) 
+            healthCheck+=0.1;
+
+        const score= healthCheck>60? 'HIGH':
+        healthCheck>30? 'MED':'LOW'
+        await this.redis.setJson(`HEALTH_SCORE`, healthCheck, 86400);
+
+        return{
+            score: healthCheck,
+        }
+    }
     async vratiPoruku(level: string)
     {
         if(level=="HIGH")
@@ -107,7 +146,6 @@ export class OdrzavanjeService
         await this.cass.execute(`DELETE FROM maintenance WHERE deviceId=?`,
             [deviceId]
         )
-
         await this.redis.del(`maintenance:${deviceId}:prediction`)
     }
 }
