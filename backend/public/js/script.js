@@ -136,21 +136,47 @@ const openBtn = document.getElementById("insert-vehicle-btn");
 const modalOverlay = document.querySelector(".modal-overlay");
 const cancelBtn = document.getElementById("cancel-button");
 const form = document.getElementById("vehicle-insert-form");
+const servisSubmitBtn = document.getElementById("servis-submit");
+const servisOpenBtn = document.getElementById("servis-open");
 
-openBtn.addEventListener("click", () => {
+//======== FUNKCIJA ZA OTVARANJE MODALA I ZELJENE FORME ======//
+function openModal(formId) {
+
+  document.querySelectorAll(".modal-form").forEach(form => {
+    form.classList.remove("active");
+  });
+
+  const form = document.getElementById(formId);
+  if (form) {
+    form.classList.add("active");
+  }
+
   modalOverlay.classList.add("active");
   document.body.classList.add("modal-open");
+}
+
+function closeModal() {
+  modalOverlay.classList.remove("active");
+  document.body.classList.remove("modal-open");
+
+  document.querySelectorAll(".modal-form").forEach(form => {
+    form.classList.remove("active");
+  });
+}
+//=======================================================//
+
+openBtn.addEventListener("click", () => {
+  openModal("vehicle-insert-form");
 });
 
 cancelBtn.addEventListener("click", () => {
   closeModal();
 });
 
-function closeModal() {
-  modalOverlay.classList.remove("active");
-  document.body.classList.remove("modal-open");
-  form.reset(); 
-}
+servisOpenBtn.addEventListener("click",() => {
+  openModal("vehicle-servis-form");
+});
+
 
 // ================= INSERT VOZILA =================
 form.addEventListener("submit", async (event) => {
@@ -210,7 +236,7 @@ form.addEventListener("submit", async (event) => {
     closeModal();
 
     loadVehicles();
-    loadVehicleList
+    loadVehicleList;
 
   } catch (error) {
     console.error(error);
@@ -218,6 +244,8 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+
+//==============DRUGA SEKCIJA - ucitavanje vozila =========/
 async function loadVehicleList() {
   const container = document.getElementById("vehicleList");
   container.innerHTML = "";
@@ -233,10 +261,12 @@ async function loadVehicleList() {
       vehicles.forEach((vehicle, index) => {
       const item = document.createElement("div");
       item.classList.add("vehicle-item");
+      item.dataset.deviceid = vehicle.deviceid; 
 
       // 👇 PRVI element dobija active
       if (index === 0) {
         item.classList.add("active");
+        firstDeviceId = vehicle.deviceid; 
       }
 
       item.innerHTML = `
@@ -249,18 +279,84 @@ async function loadVehicleList() {
       `;
 
       // 👇 klik logika (samo leva strana)
-      item.addEventListener("click", () => {
+      item.addEventListener("click", async () => {
         document
-          .querySelectorAll(".vehicle-item")
-          .forEach(el => el.classList.remove("active"));
+        .querySelectorAll(".vehicle-item")
+        .forEach(el => el.classList.remove("active"));
 
-        item.classList.add("active");
-      });
+      item.classList.add("active");
+
+      await loadVehicleDetails(item.dataset.deviceid);
+    });
 
       container.appendChild(item);
     });
+
+    if (firstDeviceId) {
+      await loadVehicleDetails(firstDeviceId);
+    }
 
   } catch (error) {
     console.error(error);
   }
 }
+
+function updateRightPanel(vehicle) {
+    // gornji deo sa nazivom i statusom
+    const generalName = document.querySelector(".general-name");
+    const statusDiv = document.querySelector(".vehicle-info-right .status");
+    const generalId = document.querySelector(".general-id");
+
+    console.log(vehicle)
+    generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
+    generalId.innerHTML = vehicle.registracija;
+
+    // status vozila (po defaultu nije pokrenuto)
+    statusDiv.textContent = "Vozilo nije pokrenuto";
+    statusDiv.classList.remove("status-on");
+    statusDiv.classList.add("status-off");
+
+    // metrics
+    const metricValues = document.querySelectorAll(".metric-value");
+
+    // primer popunjavanja metrika, redom:
+    // Brzina, Nivo ulja, Kilometraza, Gorivo, Temperatura, Obrtaji, Trenutna lokacija
+    if(metricValues.length >= 7) {
+        metricValues[0].textContent = vehicle.speed ? `${vehicle.speed} Km/h` : "0 Km/h";
+        metricValues[1].textContent = vehicle.fuellevel ? `${vehicle.fuellevel}%` : "0%";
+        metricValues[2].textContent = vehicle.odometer ? `${vehicle.odometer} km` : "0 km";
+        metricValues[3].textContent = vehicle.gorivo || "N/A";
+        metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
+        metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
+        metricValues[6].textContent = vehicle.location || "Nepoznata lokacija";
+    }
+
+    // desni metrics: Do malog servisa i do velikog servisa
+    const rightMetricValues = document.querySelectorAll(".right-metrics-info .metric-value");
+    if(rightMetricValues.length >= 2) {
+        rightMetricValues[0].textContent = vehicle.nextSmallService || "0 km";
+        rightMetricValues[1].textContent = vehicle.nextBigService || "0 km";
+    }
+}
+
+async function loadVehicleDetails(deviceId) {
+  try {
+    const res = await fetch(`http://localhost:3000/Vozila/${deviceId}`);
+    const vehicleDetails = await res.json();
+
+    const vehicle = Array.isArray(vehicleDetails)
+      ? vehicleDetails[0]
+      : vehicleDetails;
+
+    if (!vehicle) {
+      console.error("Vozilo nije pronađeno:", vehicleDetails);
+      return;
+    }
+
+    updateRightPanel(vehicle);
+
+  } catch (err) {
+    console.error("Greška pri učitavanju detalja vozila:", err);
+  }
+}
+//=============================================//

@@ -430,3 +430,11 @@ input::placeholder{
 .r-m{
     margin-right: -5px;
 }
+
+.modal-form {
+  display: none;
+}
+
+.modal-form.active {
+  display: block;
+}

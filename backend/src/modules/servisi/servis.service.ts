@@ -23,19 +23,23 @@ export class ServisService
         {
             throw new Error("Zao nam je doslo je do greske")
         }
-        this.cass.execute(`INSERT INTO service_book servisId, deviceId, majstor, tipServisa ,odometar, opis, cena, sledeciServis, odradjen VALUES(?,?,?,?,?,?,?,?,?)`,
+        this.cass.execute(
+            `
+            INSERT INTO service_book 
+            (deviceId, datum, imeMajstora, tipServisa, odometar, opis, cena, sledeciServis)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
             [
-                servisId,
                 servisDTO.deviceId,
+                servisDTO.datum,         
                 servisDTO.imeMajstora,
                 servisDTO.tipServisa,
                 servisDTO.odometar,
                 servisDTO.opis,
                 servisDTO.cena,
-                servisDTO.sledeciServis,
-                timestamp
+                servisDTO.sledeciServis  
             ]
-        )
+        );
 
         await this.red.setJson(`servis${servisId}`, servisDTO)
         await this.red.setJson(`servis${servisDTO.deviceId}:latest`, servisDTO);

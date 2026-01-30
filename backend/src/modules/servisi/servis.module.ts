@@ -11,4 +11,4 @@ import { ServisController } from "./servis.controller";
     providers:[ServisService],
     exports:[ServisService],
 })
-export class ServiceModule{}
+export class ServisModule{}
