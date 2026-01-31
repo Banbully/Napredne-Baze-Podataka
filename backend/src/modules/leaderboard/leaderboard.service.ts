@@ -113,7 +113,7 @@ export class LeaderboardService{
         return await this.vratiVozila(`leaderboard:healthScore`, 5)
     }
 
-    async updateHealthScore(deviceId: string, score:any,daily:boolean)
+    async updateHealthScore(deviceId: string, score:number,daily:boolean)
     {
         const dan = new Date().toISOString().slice(0,10)
         if(score>100)
