@@ -32,17 +32,16 @@ export class ApiService
         engineTemp: apiPodaci.sensors?.engineTemp,
         engineRpm: apiPodaci.sensors?.engineRpm,
         fuelLevel: apiPodaci.sensors?.fuelLevel,
-        batteryLevel: apiPodaci.batteryLevel,
         odometer: apiPodaci.sensors?.odometer
     };
     }
 
-    mapirajLokaciju(apiPodaci: any, deviceId:string)
+    mapirajLokaciju(apiPodaci: any)
     {
     const gpsDto = new GpsDTO();
        if (apiPodaci?.location) 
     {
-        deviceId: deviceId;
+    
         gpsDto.latitude = apiPodaci.location.lat;
         gpsDto.longitude = apiPodaci.location.lng;
         gpsDto.zone = apiPodaci.location.zone;

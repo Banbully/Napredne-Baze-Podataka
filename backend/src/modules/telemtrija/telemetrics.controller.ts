@@ -10,9 +10,9 @@ export class telemtryController{
     }
 
     @Post('ingestion')
-    ingest(@Body() telemtryDto: telemetryDTO)
+    ingest(@Body() telemtry: any)
     {
-        return this.telemtry.ingest(telemetryDTO);
+        return this.telemtry.ingest(telemtry);
     }
 
     @Get(`:deviceId/latest`)

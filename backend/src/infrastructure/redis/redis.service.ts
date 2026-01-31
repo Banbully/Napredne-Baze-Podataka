@@ -40,9 +40,9 @@ export class RedisService
         return await this.redisClient.set(key, value);
     }
     //za heshiranje
-    async hset(key:string, data:any)
+    async hset(key:string, field: string, value:string)
     {
-        return await this.redisClient.hSet(key,data);
+        return await this.redisClient.hSet(key,field, value);
     }
 
     async hGetAllHash(key: string)

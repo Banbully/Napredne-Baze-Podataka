@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { RedisService } from "src/infrastructure/redis/redis.service";
 import { CassandraService } from "../../infrastructure/cassandra/cassandra.service";
 import { GpsDTO } from "./gps.dto";
+import { ApiExcludeController } from "@nestjs/swagger";
 
 function pretvoriUDan(timestamps:string)
 {
@@ -18,25 +19,26 @@ export class GPSService
     
     async sacuvajTacku(deviceId:string, GpsDTO: GpsDTO)
     {
-        if(!GpsDTO || GpsDTO.latitude || GpsDTO.longitude)
+        if(!GpsDTO || !GpsDTO.latitude || !GpsDTO.longitude)
         {
             return "Zao nam je doslo je do greske "
         }
+
         const timestamp= new Date().toISOString();
         const dan= pretvoriUDan(timestamp)
 
 
         await this.cass.execute(
             `INSERT INTO gps_by_device_day
-            (deviceId, dan, timestamp,latitude, longitude, zone, accuracy)
+            (deviceid, dan, timestamp,latitude, longitude, zone, accuracy)
             VALUES(?,?,?,?,?,?,?)`
             ,
             [
                 deviceId,
                 dan,
                 timestamp,
-                GpsDTO.latitude,
-                GpsDTO.longitude,
+                GpsDTO.latitude || null,
+                GpsDTO.longitude || null,
                 GpsDTO.zone,
                 GpsDTO.accuracy,
             ]
@@ -45,9 +47,11 @@ export class GPSService
     this.red.setJson(
         `gps:${deviceId}:latest`,
         {
-            GpsDTO,
+            latitude: GpsDTO.latitude,
+            longitude:GpsDTO.longitude,
+            zone: GpsDTO.zone,
+            accuracy: GpsDTO.accuracy,
             timestamp,
-            deviceId
         },
         60
     ),
@@ -58,6 +62,11 @@ export class GPSService
         GpsDTO.latitude,
         deviceId
     ),
+
+    this.red.geoAdd( `gps:locations`,
+        GpsDTO.longitude,
+        GpsDTO.latitude,
+        deviceId),
 
     this.red.lPush(
         `gps:history`,
@@ -72,22 +81,30 @@ export class GPSService
     
     async vratiZadnjuLokaciju(deviceId: string)
     {
+        const dan= new Date().toISOString().slice(0,10);
         try{
             const cached =await this.red.getJSON(`gps:${deviceId}:latest`);
             
             if(cached)
             {
+                console.log("cacheHit")
                 return cached
             }
 
-            const res= await this.cass.execute(`SELECT latitude,longidute FROM gps_by_device_day WHERE deviceId=? ORDER BY timestamp DESC`,[deviceId],)
-            await this.red.setJson(`gps:${deviceId}:latest`,res.rows)
-            return res.rows
-
+            const res= await this.cass.execute(`SELECT latitude,longitude FROM gps_by_device_day WHERE deviceId=? AND dan=? ORDER BY timestamp DESC Limit 1`,[deviceId,dan],)
+            if(res.rows.length===0)
+            {
+                return null
+            }
+            
+            await this.red.setJson(`gps:${deviceId}:latest`,res.rows[0])
+            console.log("cass.hit"+ res.rows[0])
+            return res.rows[0]
         }
         catch(err)
         {
-            throw new Error("Zao nam je doslo je do greske ")
+             console.error("vratiZadnjuLokaciju ERROR:", err);
+            throw err;   // pusti pravu grešku
         }
     }
 
@@ -120,7 +137,7 @@ export class GPSService
         }
     }
 
-    async vratiURadijusu( latitude:number, longitude:number, radius: number)
+    async vratiURadijusu( longitude:number, latitude:number, radius: number)
     {
         const res=await this.red.geoRadius(`gps:locations`, longitude, latitude, radius);
         return res.map(r => ({
@@ -129,13 +146,25 @@ export class GPSService
     }
     async vratiRutuZaPeriod(deviceId: string, start: string, kraj: string)
     {
-        const rez= await this.cass.execute(`SELECT FROM gps_by_device_day WHERE deviceId=? AND dan>= ? AND dan<=? ORDER BY timestamp desc`,
-            [
-                deviceId, 
-                start, 
-                kraj
-            ])
-        return rez.rows;
+        const startDan= new Date(start)
+        const krajDan= new Date(kraj)
+        let dani: string[]=[]
+        let ruta:any[]=[]
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
+        for(const dan of dani)
+        {
+            const rez= await this.cass.execute(`SELECT * FROM gps_by_device_day WHERE deviceId=? AND dan=? ORDER BY timestamp DESC`,
+                [
+                    deviceId, 
+                    dan
+                ])
+            ruta=ruta.concat(rez.rows[0])
+        }
+        return ruta
     }
     async deleteGpsRutuZaDan(deviceId: string, dan: string)
     {
@@ -148,7 +177,7 @@ export class GPSService
             ],
         )
         await this.red.del(`gps:${deviceId}:latest`)
-        return rez.rows;
+        return {ok:true}
     }
 
     async izbrisiGPS(deviceId: string)
@@ -159,7 +188,14 @@ export class GPSService
             await this.red.del(`gps:${deviceId}:latest`)
         
         ]);
-        return{ok:true}
+
+        const rez= await this.cass.execute(
+            `DELETE FROM gps_by_device_day
+            WHERE deviceId=? `,
+            [
+                deviceId
+            ],
+        )
     }
 
     

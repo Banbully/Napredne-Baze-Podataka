@@ -5,6 +5,7 @@ import { CassandraService } from "src/infrastructure/cassandra/cassandra.service
 import { AlertsService } from "../upozorenja/alerts.service";
 import { GPSService } from "../gps/gps.service";
 import { OdrzavanjeService } from "../odrzavanje/maintenance.service";
+import { telemetryDTO } from "./telemtrics.dto";
 
 
 function pretvoriApiUdan(ts:string):string
@@ -40,17 +41,43 @@ export class telemetryService
                 payload.odometer
             ]
             );
-            await this.red.hset(
-                `telemetry:${payload.deviceId}:latest`,
-                {
-                    speed: payload.sensors.speed?.toString(),
-                    engineRpm: payload.sensors.engineRpm?.toString(),
-                    temp: payload.sensors.temp?.toString(),
-                    fuelLevel: payload.sensors.fuelLevel?.toString(),
-                    odometar: payload.sensors.odometar?.toString(),
-                    timestamp: new Date().toISOString()
-                }
-            );
+
+            console.log("HSET DATA:", {
+  speed: payload.speed,
+  engineTemp: payload.engineTemp,
+  engineRpm: payload.engineRpm,
+  fuelLevel: payload.fuelLevel,
+  odometer: payload.odometer,
+  batteryLevel: payload.batteryLevel,
+  timestamp: payload.ts
+});
+
+
+console.log("ZADD CHECK:", {
+  deviceId: payload.deviceId,
+  speed: payload.speed,
+  engineTemp: payload.engineTemp,
+  engineRpm: payload.engineRpm,
+  fuelLevel: payload.fuelLevel,
+  odometer: payload.odometer
+});
+
+
+console.log("ZADD CHECK:", {
+  deviceId: payload.deviceId,
+  speed: payload.speed,
+  engineTemp: payload.engineTemp,
+  engineRpm: payload.engineRpm,
+  fuelLevel: payload.fuelLevel,
+  odometer: payload.odometer
+});
+
+            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"speed", payload.speed)
+            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"temp", payload.engineTemp)
+            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"engineRpm" ,payload.engineRpm)
+            // await this.red.hset(`telemetry:${payload.deviceId}:latest`, "fuel",payload.fuelLevel)
+            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometar", payload.odometar)
+
             await this.red.zAdd(`leaderboard:speed`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp`, payload.engineTemp, payload.deviceId)
@@ -62,15 +89,12 @@ export class telemetryService
             await this.red.zAdd(`leaderboard:temp:${dan}`, payload.engineTemp, payload.deviceId)
             await this.red.zAdd(`leaderboard:fuel:${dan}`, payload.fuelLevel, payload.deviceId)
             await this.red.zAdd(`leaderboard:odometar:${dan}`, payload.odometer, payload.deviceId)
-            // await this.gps.sacuvajTacku(payload.device_id, payload)
+            await this.gps.sacuvajTacku(payload.device_id, payload)
             await this.upozorenje.ProceniUpozorenje(payload.deviceId, payload)
             await this.odrzavanje.evaluate(payload.deviceId, payload)
             
             return{ok : true}
-        
-
-        
-        
+    
     }
 
     async vratiVozilo(deviceId: string)

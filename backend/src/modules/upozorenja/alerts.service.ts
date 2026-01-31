@@ -6,6 +6,7 @@ import { NotificationService } from "../notifikacije/notifications.service";
 import { alertsDTO, alertsInsertDTO, alertsUpdateDTO } from "./alerts.dto";
 import { telemetryDTO } from "../telemtrija/telemtrics.dto";
 import { Decipher, randomUUID } from "crypto";
+import { json } from "stream/consumers";
 
 @Injectable()
 export class AlertsService{
@@ -81,7 +82,7 @@ export class AlertsService{
                     deviceId,
                     code: "VELIKA_DAVNA_KILOMETRAZA",
                     severity: "SREDNJA_OPASNOST",
-                    message: `Pređeno ${predjenoKm}km u jednom danu. Obratite pažnju na zamor vozača!`,
+                    message: `Pređeno ${predjenoKm}km u jednom danu. Obratite pažnju !`,
                     timestamp: new Date().toISOString(),
                     reseno: false
                 };
@@ -112,7 +113,7 @@ export class AlertsService{
         );
         Promise.all([
             await this.red.setJson(`alert:${upozorenjeId}`, a, 86400),
-            await this.red.hset(`alert:${upozorenjeId}:aktivno`,a),
+            await this.red.hset(`alert:${upozorenjeId}:`,"aktivno",JSON.stringify(a)),
             await this.red.set(`alert:${upozorenjeId}:latest`, upozorenjeId)
         ])
         
