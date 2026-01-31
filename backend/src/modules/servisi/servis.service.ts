@@ -37,7 +37,7 @@ export class ServisService
                 servisDTO.odometar,
                 servisDTO.opis,
                 servisDTO.cena,
-                servisDTO.sledeciServis  
+                servisDTO.sledeciServis ?? null
             ]
         );
 
@@ -65,12 +65,12 @@ export class ServisService
         await this.red.del(`servis:${servisId}`);
     }
 
-    async getServisPoId(servisId: string)
+    async getServisPoId(deviceId: string)
     {
-        const cached= await this.red.getJSON(`servis:${servisId}`);
+        const cached= await this.red.getJSON(`servis:${deviceId}`);
         if(cached)
             return cached
-        const res= await this.cass.execute(`SELECT * from service_book WHERE servisId=?`, [servisId])
+        const res= await this.cass.execute(`SELECT * from service_book WHERE deviceId=?`, [deviceId])
         return res.rows;
     }
     

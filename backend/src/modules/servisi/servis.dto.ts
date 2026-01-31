@@ -1,4 +1,4 @@
-import { IsDate, IsString, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsDateString } from "class-validator";
 
 export class servisDTO{
     @IsString() deviceId: string
@@ -8,7 +8,7 @@ export class servisDTO{
     @IsString() odometar: string
     @IsString() opis: string
     @IsString() cena: string
-    @IsDateString() sledeciServis: string
+    @IsOptional() @IsDateString() sledeciServis: string
 }
 
 
@@ -21,5 +21,5 @@ export class servisUpdateDTO
     @IsString() odradjen: string
     @IsString() opis: string
     @IsString() cena: string
-    @IsDateString() sledeciServis: string
+    @IsOptional() @IsDateString() sledeciServis: string
 }
