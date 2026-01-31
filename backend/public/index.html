@@ -150,11 +150,67 @@
             <div class="pre-table center-p-t">
                 <div class="h2-wrapper">
                     <h2>LEADERBOARD</h2>
-                    <p>Rangirajte vozila po vasem kriterijumu</p>
+                    <p>Rang lista vozila na osnovu izabranog kriterijuma.</p>
+                </div>
 
+                <div class="btn-wrapper">
+                    <select class="select-filter">
+                        <option value="km">Najviše pređenih kilometara</option>
+                        <option value="servisi">Najviše servisa</option>
+                        <option value="datum">Najskorije servisirano</option>
+                    </select>
+
+                    <button class="btn">
+                        Primeni
+                    </button>
                 </div>
             </div>
+
+            <table class="vehicle-table leaderboard">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Marka</th>
+                        <th>Model</th>
+                        <th>Registracija</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Audi</td>
+                        <td>A4</td>
+                        <td>BG-123-AA</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>BMW</td>
+                        <td>320d</td>
+                        <td>NS-456-BB</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Volkswagen</td>
+                        <td>Passat</td>
+                        <td>KG-789-CC</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Škoda</td>
+                        <td>Octavia</td>
+                        <td>NI-321-DD</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Mercedes</td>
+                        <td>C220</td>
+                        <td>SU-654-EE</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+
     </section>
 
     <footer>

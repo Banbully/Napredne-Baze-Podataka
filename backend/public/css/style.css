@@ -345,6 +345,7 @@ input:checked + .slider::before {
 }
 
 footer{
+    margin-top: -70px;
     text-align: center;
     padding-block: 220px 60px;
     background: linear-gradient(
@@ -359,6 +360,9 @@ footer{
     margin-top: 170px;
     display: flex;
     justify-content: center;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: 32px;
 }
 
 
@@ -458,4 +462,9 @@ input::placeholder{
     font-size: 20px;
     font-weight: 400;
     color: var(--purple-light);
+}
+
+.leaderboard{
+    max-width: 930px;
+    margin-inline: auto;
 }
