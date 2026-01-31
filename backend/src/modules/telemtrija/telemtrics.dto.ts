@@ -79,4 +79,3 @@ export class telemetryDTO
     @Type(()=> sensorDTO)
     sensors!:sensorDTO;
 }
-

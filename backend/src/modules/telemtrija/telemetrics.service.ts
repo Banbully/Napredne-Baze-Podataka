@@ -23,41 +23,51 @@ export class telemetryService
 
     async ingest(payload:any) 
     {
-        for(const data of payload.data){
-            const dan= pretvoriApiUdan(data.ts)
-
+            const dan=pretvoriApiUdan(payload.ts)
             await this.cass.execute(
                 `INSERT INTO telemetry_by_device_day
-            (deviceId, dan, ts, speed, enginerpm, fuellevel, enginetemp, odometer)
-            VALUES(?,?,?,?,?,?,?,?,9)`
+            (deviceid, dan, ts, speed, enginerpm, fuellevel, enginetemp, odometer)
+            VALUES(?,?,?,?,?,?,?,?)`
             ,
             [
-                data.device_id,
+                payload.deviceId,
                 dan,
-                data.lastSync,
-                data.sensors?.speed,
-                data.sensors?.engineRpm,
-                data.sensors?.engine_temp,
-                data.sensors?.fuelLevel,
-                data.sensors?.odometar
+                payload.ts,
+                payload.speed,
+                payload.engineRpm,
+                payload.engineTemp,
+                payload.fuelLevel,
+                payload.odometer
             ]
             );
-             await this.red.setJson(
-            `telemtry:${data.device_id}:latest`,
-                data,
-                60,
+            await this.red.hset(
+                `telemetry:${payload.deviceId}:latest`,
+                {
+                    speed: payload.sensors.speed?.toString(),
+                    engineRpm: payload.sensors.engineRpm?.toString(),
+                    temp: payload.sensors.temp?.toString(),
+                    fuelLevel: payload.sensors.fuelLevel?.toString(),
+                    odometar: payload.sensors.odometar?.toString(),
+                    timestamp: new Date().toISOString()
+                }
             );
-            await this.red.zAdd(`leaderboard:speed`, data.sensors?.speed, data.device_id)
-            await this.red.zAdd(`leaderboard:engineRpm`, data.sensors?.engineRpm, data.device_id)
-            await this.red.zAdd(`leaderboard:temp`, data.sensors?.engine_temp, data.device_id)
-            await this.red.zAdd(`leaderboard:fuel`, data.sensors?.fuellevel, data.device_id)
-            await this.red.zAdd(`leaderboard:odometar`, data.sensors?.odometar, data.device_id)
-            // await this.gps.sacuvajTacku(data.device_id, data)
-            await this.upozorenje.ProceniUpozorenje(data.device_id, data)
-            await this.odrzavanje.evaluate(data.device_id, data)
+            await this.red.zAdd(`leaderboard:speed`, payload.speed, payload.deviceId)
+            await this.red.zAdd(`leaderboard:engineRpm`, payload.engineRpm, payload.deviceId)
+            await this.red.zAdd(`leaderboard:temp`, payload.engineTemp, payload.deviceId)
+            await this.red.zAdd(`leaderboard:fuel`, payload.fuelLevel, payload.deviceId)
+            await this.red.zAdd(`leaderboard:odometar`, payload.odometer, payload.deviceId)
+
+            await this.red.zAdd(`leaderboard:speed:${dan}`, payload.speed, payload.deviceId)
+            await this.red.zAdd(`leaderboard:engineRpm:${dan}`, payload.engineRpm, payload.deviceId)
+            await this.red.zAdd(`leaderboard:temp:${dan}`, payload.engineTemp, payload.deviceId)
+            await this.red.zAdd(`leaderboard:fuel:${dan}`, payload.fuelLevel, payload.deviceId)
+            await this.red.zAdd(`leaderboard:odometar:${dan}`, payload.odometer, payload.deviceId)
+            // await this.gps.sacuvajTacku(payload.device_id, payload)
+            await this.upozorenje.ProceniUpozorenje(payload.deviceId, payload)
+            await this.odrzavanje.evaluate(payload.deviceId, payload)
             
             return{ok : true}
-        } 
+        
 
         
         

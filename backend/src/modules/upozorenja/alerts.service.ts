@@ -112,7 +112,7 @@ export class AlertsService{
         );
         Promise.all([
             await this.red.setJson(`alert:${upozorenjeId}`, a, 86400),
-            await this.red.hset(`alert:${upozorenjeId}:aktivno`, upozorenjeId, a),
+            await this.red.hset(`alert:${upozorenjeId}:aktivno`,a),
             await this.red.set(`alert:${upozorenjeId}:latest`, upozorenjeId)
         ])
         

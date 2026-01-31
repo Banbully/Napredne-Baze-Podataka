@@ -13,7 +13,7 @@ export class VehicleService
 {
     constructor(private readonly cass: CassandraService, private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService){}
 
-    private timer: Record<string, NodeJS.Timeout>;
+    private timer: Record<string, NodeJS.Timeout>={};
 
     async Create(dto: VehicleDTO)
     {
@@ -100,10 +100,10 @@ export class VehicleService
                 return;
             }
             this.timer[deviceId]=setInterval(async()=>{
-            const povuciApi= this.api.fetchFromAPi();
+            const povuciApi= await this.api.fetchFromAPi();
 
             const pretvori= this.api.mapirajApi(povuciApi, deviceId);
-
+            console.log("MAPIRANO:", pretvori);
             await this.telemtry.ingest(pretvori);},5000)
 
             await this.red.set(`vozila:${deviceId}:status`, "aktivan")

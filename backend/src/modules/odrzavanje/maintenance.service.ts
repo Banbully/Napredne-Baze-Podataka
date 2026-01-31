@@ -18,7 +18,7 @@ export class OdrzavanjeService
     {
         const Obavestenje=[]
         
-        const prediktor= this.predict(telemetry);
+        const prediktor= await this.predict(telemetry);
 
         await this.redis.setJson(`maintenance:${deviceId}:prediction`,
             prediktor,
@@ -27,10 +27,10 @@ export class OdrzavanjeService
 
         await this.cass.execute(
             `INSERT INTO maintenance_predictor
-            (deviceId, ts, nivo_opasnosti, risk_score, poruka)
+            (deviceid, ts, nivo_opasnosti, risk_score, poruka)
             VALUES(?,?,?,?,?)`,
             [
-                telemetry.deviceId, prediktor.timestamp, prediktor.level, prediktor.level, prediktor.poruka 
+                telemetry.deviceId, prediktor.timestamp, prediktor.level, prediktor.score, prediktor.poruka 
             ]
         )
 
@@ -42,28 +42,29 @@ export class OdrzavanjeService
 
     }
 
-    private  predict(telemtry: any)
+
+    private async predict(telemtry: any)
     {
         let score=0;
-        if(telemtry.sensors?.engineTemp>95) 
+        if(telemtry.engineTemp>95) 
             score+=20;
-        if(telemtry.sensors?.engineTemp>95) 
+        if(telemtry.engineTemp>95) 
             score+=10;
-        if(telemtry.sensors?.batteryLevel<30) 
+        if(telemtry.batteryLevel<30) 
             score+=10;
-        if(telemtry.sensors?.batteryLevel<15) 
+        if(telemtry.batteryLevel<15) 
             score+=20;
-        if(telemtry.sensors?.odometar>50000) 
+        if(telemtry.odometar>50000) 
             score+=5;
-        if(telemtry.sensors?.odometar>100000) 
+        if(telemtry.odometar>100000) 
             score+=10;
-        if(telemtry.sensors?.odometar>150000) 
+        if(telemtry.odometar>150000) 
             score+=15;
-        if(telemtry.sensors?.fuelLevel<20) 
+        if(telemtry.fuelLevel<20) 
             score+=10;
-        if(telemtry.sensors?.fuelLevel<10) 
+        if(telemtry.fuelLevel<10) 
             score+=20;
-        if(telemtry.sensors?.dtcCode) 
+        if(telemtry.dtcCode) 
             score+=100;
 
         const level= score>60? 'HIGH':
@@ -71,12 +72,11 @@ export class OdrzavanjeService
        
         return{  
             level,
-            score: score,
-            poruka: this.vratiPoruku(level),
+            score: String(score),
+            poruka: await this.vratiPoruku(level),
             timestamp: new Date().toISOString()
         }
     }
-
 
 
     async healthScoreZaVozilo(telemtry: any, deviceId: string)

@@ -34,14 +34,14 @@ export class VehicleController
         return this.service.VratiSvaVozila()
     }
 
-    @Post("Generisi")
-    generisi(@Query() deviceId: string)
+    @Post("Generisi/:id")
+    generisi(@Param('id') deviceId: string)
     {
         return this.service.StartujGenerisanje(deviceId, true)
     }
 
     @Post("PrekiniGenerisanje")
-    PrekiniGenerisanje(@Query() deviceId: string)
+    PrekiniGenerisanje(@Param('id') deviceId: string)
     {
         return this.service.StartujGenerisanje(deviceId, false)
     }

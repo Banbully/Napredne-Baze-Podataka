@@ -20,7 +20,7 @@ export class ApiService
         const json= await res.json()
         console.log("RAW API RESPONSE:", json) // DODAJ OVO!
         console.log("JSON.DATA:", json.data) // DODAJ OVO!
-        return json.data;
+        return json.data[0];
     }
 
     mapirajApi(apiPodaci: any, deviceId:string) 
