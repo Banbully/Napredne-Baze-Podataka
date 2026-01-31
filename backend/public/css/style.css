@@ -438,3 +438,24 @@ input::placeholder{
 .modal-form.active {
   display: block;
 }
+
+.servis-istorija-modal{
+    max-width: none;
+    width: 1000px;
+}
+
+.pre-table.servis-istorija
+{
+    margin-bottom: 0px;
+    margin-top: 39px;
+}
+
+.btn.ghost-button.servis{
+    width: auto;
+}
+
+.servis-istorija-header{
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--purple-light);
+}

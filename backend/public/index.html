@@ -134,7 +134,7 @@
                                 </div>
 
                                 <div class="metric-buttons-wrapper">
-                                    <button class="btn ghost-button">Istorija servisa</button>
+                                    <button class="btn ghost-button" id="servis-istorija">Istorija servisa</button>
                                     <button class="btn" id="servis-open">Servisiraj vozilo</button>
                                 </div>
                         </div>
@@ -151,6 +151,7 @@
                 <div class="h2-wrapper">
                     <h2>LEADERBOARD</h2>
                     <p>Rangirajte vozila po vasem kriterijumu</p>
+
                 </div>
             </div>
         </div>
@@ -176,7 +177,7 @@
             </div>
             <div class="vehicle-insert-buttons-wrapper">
                 <button type="submit" class="btn center" id="vehicle-insert-btn-close">Posalji</button>
-                <button type="button" class="btn center ghost-button form" id="cancel-button">Otkazi</button>
+                <button type="button" class="btn center ghost-button form cancel-button">Otkazi</button>
             </div>    
         </div>
     </form>
@@ -197,14 +198,62 @@
                     <input id="s-majstor" type="text" placeholder="Ime majstora" required>
                     <input id="s-datum" type="date" required>
                     <input id="s-cena" type="number" placeholder="Cena servisa" min="0" step="0.01" required>
+                    <input id="s-opis" type="text" placeholder="Opis" required>Sledeci servis
+                    <input id="s-sledeciServis" type="date">
                 </div>
                 <div class="vehicle-insert-buttons-wrapper">
                     <button type="submit" class="btn center" id="servis-submit">Sačuvaj servis</button>
-                    <button type="button" class="btn center ghost-button form" id="cancel-button">Otkaži</button> 
+                    <button type="button" class="btn center ghost-button form cancel-button">Otkaži</button> 
                 </div>
         </div>
     </form>
 
+    <div id="service-history-modal" class="modal-form">
+        <div class="modal servis-istorija-modal">
+            <h2>ISTORIJA SERVISA</h2>
+            <div class="pre-table servis-istorija">
+                <div class="h2-wrapper">
+                    <p><span class="servis-istorija-header"> </span></p>
+                </div>
+                <div class="btn-wrapper">
+                    <button id="close-service-history-btn" class="btn ghost-button servis cancel-button">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table service-history-table">
+                <thead>
+                    <tr>
+                        <th>Tip servisa</th>
+                        <th>Ime majstora</th>
+                        <th>Cena</th>
+                        <th>Opis</th>
+                        <th>Datum</th>
+                        <th>Sledeći servis</th>
+                        <th>Obriši</th>
+                    </tr>
+                </thead>
+                
+                <tbody id="service-history-body">
+                    <tr>
+                        <td>Mali servis</td>
+                        <td>Marko Petrović</td>
+                        <td>5000</td>
+                        <td>Zamena ulja i filtera</td>
+                        <td>2026-01-15</td>
+                        <td>2026-07-15</td>
+                        <td>
+                            <button class="delete-btn" data-serviceid="servis-123">
+                                <img src="resources/DeleteIcon.svg" alt="Obriši">
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+
+
+            </table>
+        </div>
+    </div> 
   </div>
 
     <script src="js/script.js"></script>

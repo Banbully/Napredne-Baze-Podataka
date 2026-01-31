@@ -4,6 +4,7 @@ console.log("Radi");
 const tableBody = document.querySelector(".vehicle-table tbody");
 
 
+//======= BRISANJE VOZILA ===============//
 function deleteVehicle(deviceId, rowElement) {
   fetch(`http://localhost:3000/Vozila/${deviceId}`, {
     method: 'DELETE',
@@ -15,7 +16,7 @@ function deleteVehicle(deviceId, rowElement) {
     if (!response.ok) {
       throw new Error(`Greška pri brisanju vozila: ${response.status}`);
     }
-    // ukloni red iz tabele
+
     rowElement.remove();
     console.log(`Vozilo ${deviceId} obrisano`);
   })
@@ -25,7 +26,7 @@ function deleteVehicle(deviceId, rowElement) {
 
 tableBody.addEventListener("click", (event) => {
   const btn = event.target.closest(".delete-btn");
-  if (!btn) return; // nije klik na delete dugme
+  if (!btn) return;
 
   const row = btn.closest("tr");
   const deviceId = btn.dataset.deviceid;
@@ -36,6 +37,8 @@ tableBody.addEventListener("click", (event) => {
   loadVehicleList();
 
 });
+
+//===========================================================//
 
 async function loadVehicles() {
         try {
@@ -110,8 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
 document.querySelectorAll("#vehicleToggle").forEach(toggle => {
     toggle.addEventListener("change", () => {
     const row = toggle.closest("tr");
@@ -134,10 +135,13 @@ document.querySelectorAll("#vehicleToggle").forEach(toggle => {
 // ================= MODAL LOGIKA =================
 const openBtn = document.getElementById("insert-vehicle-btn");
 const modalOverlay = document.querySelector(".modal-overlay");
-const cancelBtn = document.getElementById("cancel-button");
+const cancelButtons = document.querySelectorAll(".cancel-button");
 const form = document.getElementById("vehicle-insert-form");
 const servisSubmitBtn = document.getElementById("servis-submit");
 const servisOpenBtn = document.getElementById("servis-open");
+const formServisi = document.getElementById("vehicle-servis-form");
+const servisIstorijaBtn = document.getElementById("servis-istorija");
+
 
 //======== FUNKCIJA ZA OTVARANJE MODALA I ZELJENE FORME ======//
 function openModal(formId) {
@@ -169,14 +173,20 @@ openBtn.addEventListener("click", () => {
   openModal("vehicle-insert-form");
 });
 
-cancelBtn.addEventListener("click", () => {
-  closeModal();
+cancelButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    closeModal();
+  });
 });
 
 servisOpenBtn.addEventListener("click",() => {
   openModal("vehicle-servis-form");
 });
 
+servisIstorijaBtn.addEventListener("click", async () => {
+  await loadServiceHistory(servisIstorijaBtn.dataset.deviceid);
+  openModal("service-history-modal");
+})
 
 // ================= INSERT VOZILA =================
 form.addEventListener("submit", async (event) => {
@@ -337,6 +347,13 @@ function updateRightPanel(vehicle) {
         rightMetricValues[0].textContent = vehicle.nextSmallService || "0 km";
         rightMetricValues[1].textContent = vehicle.nextBigService || "0 km";
     }
+
+    if (servisOpenBtn) {
+      servisOpenBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (servisIstorijaBtn) {
+      servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
 }
 
 async function loadVehicleDetails(deviceId) {
@@ -360,3 +377,110 @@ async function loadVehicleDetails(deviceId) {
   }
 }
 //=============================================//
+
+//==========INSERT SERVISA================//
+formServisi.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  
+  const servisBtn = document.getElementById("servis-open");
+  const _deviceId = servisBtn.dataset.deviceid;
+
+  if (!_deviceId) {
+    alert("Nije selektovano vozilo");
+    return;
+  }
+
+  const servisData = {
+    deviceId: _deviceId,
+    datum: document.getElementById("s-datum").value, 
+    imeMajstora: document.getElementById("s-majstor").value.trim(),
+    tipServisa: document.getElementById("s-tip").value,
+    //odometar: document.getElementById("s-odometar").value.trim(),
+    opis: document.getElementById("s-opis").value.trim(),
+    cena: document.getElementById("s-cena").value.trim(),
+    sledeciServis: document.getElementById("s-sledeciServis").value || null
+  };
+
+    
+  if (
+    !servisData.datum ||
+    !servisData.imeMajstora ||
+    !servisData.tipServisa ||
+    !servisData.opis ||
+    !servisData.cena
+  ) {
+    alert("Sva polja moraju biti popunjena osim SLEDECEG SERVISA.");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:3000/servisi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(servisData)
+    });
+
+    if (!response.ok) {
+      throw new Error("Greška pri unosu servisa");
+    }
+
+    console.log("Servis uspešno dodat");
+    closeModal();
+
+  } catch (error) {
+    console.error(error);
+    alert("Došlo je do greške pri unosu servisa");
+  }
+});
+//========================================================//
+
+//==================PRIKAZ ISTORIJE SERVISA=============//
+async function loadServiceHistory(vehicleId) {
+    const tbody = document.getElementById("service-history-body");
+    tbody.innerHTML = "";
+
+
+    try {
+
+        const vehicleRes = await fetch(`http://localhost:3000/Vozila/${vehicleId}`);
+        if (vehicleRes.ok) {
+            const vehicleData = await vehicleRes.json();
+            const vehicle = Array.isArray(vehicleData) ? vehicleData[0] : vehicleData;
+            const headerSpan = document.querySelector(".servis-istorija-header");
+            if (vehicle && headerSpan) {
+                headerSpan.textContent = `${vehicle.marka} ${vehicle.model} [   ${vehicle.registracija}   ]`;
+            }
+        }
+
+
+        const response = await fetch(`http://localhost:3000/servisi/${vehicleId}`);
+        if (!response.ok) throw new Error("Greška pri učitavanju servisa");
+
+        const services = await response.json();
+
+        services.forEach(servis => {
+            console.log(servis);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${servis.tipservisa}</td>
+                <td>${servis.imemajstora}</td>
+                <td>${servis.cena}</td>
+                <td>${servis.opis}</td>
+                <td>${servis.datum}</td>
+                <td>${servis.sledeciservis || "/"}</td>
+                <td>
+                    <button class="delete-btn" data-serviceid="${servis.servisId}">
+                        <img src="resources/DeleteIcon.svg" alt="Obriši">
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="7">Nije moguće učitati istoriju servisa.</td></tr>`;
+    }
+}
