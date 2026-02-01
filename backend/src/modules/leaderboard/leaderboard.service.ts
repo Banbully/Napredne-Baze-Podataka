@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { targetModulesByContainer } from "@nestjs/core/router/router-module";
 import RedisClient from "@redis/client/dist/lib/client";
 import { CassandraService } from "src/infrastructure/cassandra/cassandra.service";
 
@@ -152,22 +153,25 @@ export class LeaderboardService{
                     deviceId
                 ],
             )
-            
             const value= res.rows[0];
            
             tabela.push({
                 deviceId,
                 marka: value.marka,
                 model: value.model,
-                score: r.score
+                score: score
             });
+            
+            console.log("tabela", tabela)
             }
             catch(err)
             {
-                return []
+                console.log("GRESKA ZA", r.value, err);
+                continue; 
             }
+            
         }
-        return tabela
+        return tabela.sort((a,b)=> b.score - a.score)
     }
 
     async resetLeaderboardove(parametar:string)
@@ -237,11 +241,11 @@ export class LeaderboardService{
     {
         const dan= new Date().toISOString().slice(0,10)
         await Promise.all([
-            await this.red.del(`leaderboard:odometar:${dan}`),
-            await this.red.del(`leaderboard:temp:${dan}`),
-            await this.red.del(`leaderboard:engineRpm:${dan}`),
-            await this.red.del(`leaderboard:speed:${dan}`),
-            await this.red.del(`leaderboard:fuel:${dan}`)
+            await this.red.del(`leaderboard:odometar`),
+            await this.red.del(`leaderboard:temp`),
+            await this.red.del(`leaderboard:engineRpm`),
+            await this.red.del(`leaderboard:speed`),
+            await this.red.del(`leaderboard:fuel`)
         ])
     }
 

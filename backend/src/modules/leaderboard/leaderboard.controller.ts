@@ -107,7 +107,7 @@ export class LeaderboardController
         return this.leaderboard.OcistiTabelu(parametar);
     }
 
-    @Delete('resetGlobal/:parametar')
+    @Delete('resetujGlobalne')
     resetGlobalTabele()
     {
         return this.leaderboard.OcistiTabele();

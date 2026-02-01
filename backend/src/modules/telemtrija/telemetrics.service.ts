@@ -84,6 +84,7 @@ console.log("ZADD CHECK:", {
             await this.red.zAdd(`leaderboard:fuel`, payload.fuelLevel, payload.deviceId)
             await this.red.zAdd(`leaderboard:odometar`, payload.odometer, payload.deviceId)
 
+            //console.log("zadd",t1)
             await this.red.zAdd(`leaderboard:speed:${dan}`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm:${dan}`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp:${dan}`, payload.engineTemp, payload.deviceId)
