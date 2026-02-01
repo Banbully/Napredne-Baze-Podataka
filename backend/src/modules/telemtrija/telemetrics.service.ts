@@ -78,7 +78,6 @@ console.log("ZADD CHECK:", {
             await this.red.hset(`telemetry:${payload.deviceId}:latest`, "fuel",String(payload.fuelLevel))
             await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometar", String(payload.odometar))
 
-            await this.red.setJson(`telemtry:${payload.deviceId}:latest`, payload,60)
             await this.red.zAdd(`leaderboard:speed`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp`, payload.engineTemp, payload.deviceId)
@@ -113,35 +112,37 @@ console.log("ZADD CHECK:", {
     }
 
 
-    async vratiParametar(parametar:string, deviceId:string)
+    async vratiParametar(parametar:string, deviceId:string, dan:string)
     {
-        const cached= await this.red.hGet(`telemtry:${deviceId}:latest`, parametar)
+        const cached= await this.red.hGet(`telemetry:${deviceId}:latest`, parametar)
         if(cached)
         {
             return cached
         }
+        console.log(cached)
         
-        const res= await this.cass.execute(`SELECT ${parametar} FROM telemetry_by_device_day WHERE deviceid=?`,[deviceId]);
+        const res= await this.cass.execute(`SELECT ${parametar} FROM telemetry_by_device_day WHERE deviceid=? AND dan=? ORDER BY ts LIMIT 1`,[deviceId, dan]);
         await this.red.hset(`telemtry:${deviceId}:latest`,`${parametar}`, String(res.rows[0]));
-        return res.rows[0]
+        return res.rows[0];
     }
 
-     async vratiSveParametar(deviceId:string)
+    async vratiSveParametar(deviceId:string, dan:string)
     {
-        const cached= await this.red.hGetAllHash(`telemtry:${deviceId}:latest`)
-        if(cached)
+        const cached= await this.red.hGetAllHash(`telemetry:${deviceId}:latest`)
+        console.log("cache",cached)
+        if(cached && Object.keys(cached).length > 0)
         {
             return cached
         }
-        
-        const res= await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceid=?`,[deviceId]);
+       
+        const res= await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceid=? AND dan=? ORDER BY ts LIMIT 1`,[deviceId,dan]);
         const rez= res.rows[0]
         await this.red.hset(`telemetry:${deviceId}:latest`,"speed", String(rez.speed))
         await this.red.hset(`telemetry:${deviceId}:latest`,"temp", String(rez.engineTemp))
         await this.red.hset(`telemetry:${deviceId}:latest`,"engineRpm" ,String(rez.engineRpm))
         await this.red.hset(`telemetry:${deviceId}:latest`, "fuel",String(rez.fuelLevel))
-        await this.red.hset(`telemetry:${deviceId}:latest`,"odometar", String(rez.odometar))
-
+        await this.red.hset(`telemetry:${deviceId}:latest`,"odometar", String(rez.odometer))
+        console.log("rezhit"+rez)
         return rez;
     }
     

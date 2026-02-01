@@ -16,10 +16,17 @@ export class telemtryController{
     }
 
     @Get(`:deviceId/latest`)
-    latest(@Param(`deviceId`) id:string)
+    latest(@Param(`deviceId`) id:string, @Query('dan')dan:string)
     {
-        // return this.telemtry.vratiHashovano(id)
+        return this.telemtry.vratiSveParametar(id,dan)
     }
+
+    @Get(`:deviceId/latestparametar`)
+    latestParametar(@Param(`deviceId`) id:string,@Query('parametar') parametar:string,  @Query('dan')dan:string)
+    {
+        return this.telemtry.vratiParametar(parametar,id,dan)
+    }
+
 
     @Delete()
     obrisiZaDan(@Query('deviceId')deviceId: string, @Query()dan:string)

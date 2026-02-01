@@ -71,7 +71,7 @@ export class OdrzavanjeService
        
         return{  
             level,
-            score: score,
+            score: String(score),
             poruka: await this.vratiPoruku(level),
             timestamp: new Date().toISOString()
         }
