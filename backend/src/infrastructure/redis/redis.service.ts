@@ -45,6 +45,10 @@ export class RedisService
         return await this.redisClient.hSet(key,field, value);
     }
 
+    async hGet(key:string, field:string)
+    {
+        return await this.redisClient.hGet(key, field)
+    }
     async hGetAllHash(key: string)
     {
         return await this.redisClient.hGetAll(key);

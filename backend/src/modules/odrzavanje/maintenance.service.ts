@@ -39,7 +39,6 @@ export class OdrzavanjeService
             await this.redis.sadd(`maintenance_predictor:${deviceId}`, JSON.stringify(telemetry))
         ])
         
-
     }
 
 
@@ -72,7 +71,7 @@ export class OdrzavanjeService
        
         return{  
             level,
-            score: String(score),
+            score: score,
             poruka: await this.vratiPoruku(level),
             timestamp: new Date().toISOString()
         }
@@ -84,22 +83,22 @@ export class OdrzavanjeService
         let healthCheck=100;
         if(telemtry.sensors?.engineTemp>95) 
             healthCheck-=0.1;
-        if(telemtry.sensors?.engineTemp>95) 
+        if(telemtry.sensors?.engineTemp>110) 
             healthCheck-=0.2;
         if(telemtry.sensors?.batteryLevel<30) 
             healthCheck-=0.1;
         if(telemtry.sensors?.batteryLevel<15) 
-            healthCheck-=0.1;
+            healthCheck-=0.3;
         if(telemtry.sensors?.odometar>50000) 
             healthCheck-=0.1;
         if(telemtry.sensors?.odometar>100000) 
-            healthCheck-=0.1;
+            healthCheck-=0.3;
         if(telemtry.sensors?.odometar>150000) 
             healthCheck-=0.1;
         if(telemtry.sensors?.fuelLevel<20) 
             healthCheck-=0.1;
         if(telemtry.sensors?.fuelLevel<10) 
-            healthCheck-=0.1;
+            healthCheck-=0.3;
         if(telemtry.sensors?.dtcCode) 
             healthCheck-=100;
 
@@ -107,14 +106,33 @@ export class OdrzavanjeService
          const level= healthCheck>90? 'Odlican':
         healthCheck>60? 'Zadovoljavajuc':'Los'
 
-        await this.redis.setJson(`HEALTH_SCORE:${deviceId}`, healthCheck, 86400);
+        await this.redis.set(`health:${deviceId}:latest`, String(healthCheck));
+        await this.redis.zAdd(`leaderboard:healthScore`, healthCheck, deviceId)
 
+        await this.cass.execute(`INSERT INTO healthscore (deviceid, timestamp, dan, score, level) VALUES(?,?,?,?,?))`,[
+            deviceId,
+            new Date().toISOString(),
+            new Date().toISOString().slice(0,10),
+            healthCheck,
+            level
+        ])
         return{
             level,
             score: healthCheck,
             timestamp: new Date().toISOString()
             
         }
+
+    }
+
+    async vratiHealthScore(deviceId:string)
+    {
+        const rediscache= await this.redis.get(`health:${deviceId}:latest`)
+        if(rediscache)
+        {
+            return JSON.parse(rediscache)
+        }
+        await this.redis.setJson(`health:${deviceId}:latest`,0, 86400);
     }
     async vratiPoruku(level: string)
     {

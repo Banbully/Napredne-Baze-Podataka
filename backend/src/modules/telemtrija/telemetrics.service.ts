@@ -72,12 +72,13 @@ console.log("ZADD CHECK:", {
   odometer: payload.odometer
 });
 
-            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"speed", payload.speed)
-            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"temp", payload.engineTemp)
-            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"engineRpm" ,payload.engineRpm)
-            // await this.red.hset(`telemetry:${payload.deviceId}:latest`, "fuel",payload.fuelLevel)
-            // await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometar", payload.odometar)
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"speed", String(payload.speed))
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"temp", String(payload.engineTemp))
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"engineRpm" ,String(payload.engineRpm))
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`, "fuel",String(payload.fuelLevel))
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometar", String(payload.odometar))
 
+            await this.red.setJson(`telemtry:${payload.deviceId}:latest`, payload,60)
             await this.red.zAdd(`leaderboard:speed`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp`, payload.engineTemp, payload.deviceId)
@@ -89,7 +90,6 @@ console.log("ZADD CHECK:", {
             await this.red.zAdd(`leaderboard:temp:${dan}`, payload.engineTemp, payload.deviceId)
             await this.red.zAdd(`leaderboard:fuel:${dan}`, payload.fuelLevel, payload.deviceId)
             await this.red.zAdd(`leaderboard:odometar:${dan}`, payload.odometer, payload.deviceId)
-            await this.gps.sacuvajTacku(payload.device_id, payload)
             await this.upozorenje.ProceniUpozorenje(payload.deviceId, payload)
             await this.odrzavanje.evaluate(payload.deviceId, payload)
             
@@ -97,62 +97,52 @@ console.log("ZADD CHECK:", {
     
     }
 
-    async vratiVozilo(deviceId: string)
-    {
-        try{
-        const cached= await this.red.getJSON(`telemtry:${deviceId}:latest`)
-        if(cached)
-        {
-            return cached
-        }
-        
-        const res=await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceId=?`, [deviceId],)
-        await this.red.setJson(`telemtry:${deviceId}:latest`,res.rows[0], 86400)
-        return res.rows[0];
-        }
-        catch(err)
-        {
-            console.log(err)
-        }
-    }
 
 
     async DeleteZaDan(deviceId: string, dan:string)
     {
         this.cass.execute(
-        `DELETE FROM telemetry_by_device_day WHERE deviceID=? and dan=?`,
+        `DELETE FROM telemetry_by_device_day WHERE deviceid=? and dan=?`,
         [
             deviceId, dan
         ]
         );
-        return {ok: true};        
+        await this.red.del(`telemtry:${deviceId}:latest`);
+        return {ok: true};   
+        
     }
 
 
     async vratiParametar(parametar:string, deviceId:string)
     {
-        const cached= await this.red.get(`telemtry:${deviceId}:latest:${parametar}`)
+        const cached= await this.red.hGet(`telemtry:${deviceId}:latest`, parametar)
         if(cached)
         {
             return cached
         }
         
-        const res= await this.cass.execute(`SELECT ${parametar} FROM telemetry_by_device_day WHERE deviceId=?`,[deviceId]);
-        await this.red.set(`telemtry:${deviceId}:latest:${parametar}`, JSON.stringify(res.rows[0]));
+        const res= await this.cass.execute(`SELECT ${parametar} FROM telemetry_by_device_day WHERE deviceid=?`,[deviceId]);
+        await this.red.hset(`telemtry:${deviceId}:latest`,`${parametar}`, String(res.rows[0]));
         return res.rows[0]
     }
 
      async vratiSveParametar(deviceId:string)
     {
-        const cached= await this.red.get(`telemtry:${deviceId}:latest`)
+        const cached= await this.red.hGetAllHash(`telemtry:${deviceId}:latest`)
         if(cached)
         {
             return cached
         }
         
-        const res= await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceId=?`,[deviceId]);
-        await this.red.set(`telemtry:${deviceId}:latest`, JSON.stringify(res.rows[0]));
-        return res.rows[0]
+        const res= await this.cass.execute(`SELECT * FROM telemetry_by_device_day WHERE deviceid=?`,[deviceId]);
+        const rez= res.rows[0]
+        await this.red.hset(`telemetry:${deviceId}:latest`,"speed", String(rez.speed))
+        await this.red.hset(`telemetry:${deviceId}:latest`,"temp", String(rez.engineTemp))
+        await this.red.hset(`telemetry:${deviceId}:latest`,"engineRpm" ,String(rez.engineRpm))
+        await this.red.hset(`telemetry:${deviceId}:latest`, "fuel",String(rez.fuelLevel))
+        await this.red.hset(`telemetry:${deviceId}:latest`,"odometar", String(rez.odometar))
+
+        return rez;
     }
     
 }

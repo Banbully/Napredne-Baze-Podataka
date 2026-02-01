@@ -96,29 +96,48 @@ export class AlertsService{
     private async sacuvajUpozorenja(deviceId: string, a: alertsDTO)
     {
         const upozorenjeId= `alert:${randomUUID()}`
+        const dan = new Date().toISOString()
         await this.cass.execute
         (
             `INSERT INTO upozorenja
-            (upozorenjeId,deviceId, timestamp, code, severity, message)
-            VALUES(?,?,?,?,?,?)`
+            (upozorenjeid,deviceid, timestamp, dan, code, severity, message, reseno)
+            VALUES(?,?,?,?,?,?,?,?)`
             ,
             [
                 upozorenjeId,
                 deviceId,
                 a.timestamp,
+                dan,
                 a.code,
                 a.severity,
-                a.message
+                a.message,
+                a.reseno
             ]
         );
-        Promise.all([
-            await this.red.setJson(`alert:${upozorenjeId}`, a, 86400),
-            await this.red.hset(`alert:${upozorenjeId}:`,"aktivno",JSON.stringify(a)),
-            await this.red.set(`alert:${upozorenjeId}:latest`, upozorenjeId)
+
+        const alert={
+            upozorenjeId,
+            deviceId,
+            timestamp:a.timestamp,
+            dan,
+            code:a.code||null,
+            severity:a.severity||null,
+            message:a.message, 
+            reseno:a.reseno
+        }
+        await Promise.all([
+            await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
+            await this.red.hset(`alert:${upozorenjeId}:`,"aktivno",JSON.stringify(alert)),
+            await this.red.setJson(`alert:${upozorenjeId}:latest`, alert),
+            await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert)),
+            await this.red.lPush(`alert:queue`, JSON.stringify(alert))
+
         ])
         
+
     }
 
+  
     async vratiUpozorenjaPoId(upozorenjeId: string)
     {
         try{
@@ -234,7 +253,7 @@ export class AlertsService{
 
         await Promise.all([
             await this.red.del(`alerts:${upozorenjeId}`),
-            await this.red.zRem(`alerts:active`, upozorenjeId)
+            await this.red.hDel(`alerts:active`, upozorenjeId)
         ])
         return {ok: true}; 
     }
@@ -244,6 +263,8 @@ export class AlertsService{
     }
     }
 
+
+     
 
 
 }
