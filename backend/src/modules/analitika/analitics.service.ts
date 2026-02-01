@@ -25,102 +25,240 @@ export class AnalyticsService
 
     async vratiBRzinuOdDoZaGraf(deviceId: string, od:string, doo:string)
     {
-        const cached= await this.red.get(`analitika:${deviceId}:speed:${od}:${doo}`)
+
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rezultat: { x: string, y: number }[] = [];
+        const cached= await this.red.getJSON(`analitika:${deviceId}:speed:${od}:${doo}`)
+        
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
         if(cached)
         {
-            return JSON.parse(cached)
+            return cached
         }
+        for(const dan of dani){
+            const res= await this.cass.execute(`SELECT ts,speed FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
 
-        const res= await this.cass.execute(`SELECT timestamp, speed FROM telemetry_by_device_day WHERE device_id=? AND dan>=? AND day<=?`,[deviceId, od, doo])
-
-        const rez=res.rows.map(r=>({x: r.timestamp, y:r.speed}))
-
-        await this.red.set(`analitika:${deviceId}:speed:${od}:${doo}`, JSON.stringify(rez))
-        return rez;
+            const rez=res.rows.map(r=>({x: r.ts,y:r.speed}))
+            rezultat=rezultat.concat(rez)
+        }
+        await this.red.set(`analitika:${deviceId}:speed:${od}:${doo}`, JSON.stringify(rezultat))
+        return rezultat;
     }
 
 
     async vratiOdometarOdDOZaGraf(deviceId:string, od:string, doo:string)
     {
-        const cached= await this.red.get(`analitika:${deviceId}:speed:${od}:${doo}`)
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rezultat:  { x: string, y: number }[] = [];
+        const cached= await this.red.getJSON(`analitika:${deviceId}:odometar:${od}:${doo}`)
         if(cached)
         {
-            return JSON.parse(cached)
+            return cached
         }
 
-        const res= await this.cass.execute(`SELECT timestamp, odometar FROM telemetry_by_device_day WHERE device_id=? AND dan>=? AND day<=?`,[deviceId, od, doo])
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
+        for(const dan of dani){
+            const res= await this.cass.execute(`SELECT ts,odometer FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
 
-        const rows= res.rows.reverse() //gledaj obrnutu logiku msm ima da izgleda ko da vracamo kilometre thanks api
-        const rez=res.rows.map(r=>({x: r.timestamp, y:r.speed}))
+             //gledaj obrnutu logiku msm ima da izgleda ko da vracamo kilometre thanks api
+            const rez= res.rows.map(r => ({x:r.ts,y: r.odometar}));
 
-        await this.red.set(`analitika:${deviceId}:odometar:${od}:${doo}`, JSON.stringify(rez))
-        return rez;
+            rezultat=rezultat.concat(rez)
+        }
+
+        await this.red.set(`analitika:${deviceId}:odometar:${od}:${doo}`, JSON.stringify(rezultat))
+        return rezultat;
     }
 
 
     async vratiTemperaturuOdDo(deviceId:string, od:string, doo:string)
     {
+         
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rezultat: { x: string, y: number }[] = [];
          const cached= await this.red.get(`analitika:${deviceId}:engineTemp:${od}:${doo}`)
         if(cached)
         {
             return JSON.parse(cached)
         }
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
+        for(const dan of dani){
+            const res= await this.cass.execute(`SELECT ts,enginetemp FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
 
-        const res= await this.cass.execute(`SELECT timestamp, engineTemp FROM telemetry_by_device_day WHERE device_id=? AND dan>=? AND day<=?`,[deviceId, od, doo])
+            rezultat=rezultat.concat(res.rows.map(r=>({x:r.ts, y:r.engineTemp})))
+        }
+        if(rezultat.length==0)
+        {
+            return 0
+        }
 
-        const rez=res.rows.map(r=>r.engineTemp)
-
-        await this.red.set(`analitika:${deviceId}:engineTemp:${od}:${doo}`, JSON.stringify(rez))
-        return rez;
+        await this.red.set(`analitika:${deviceId}:temp:${od}:${doo}`, JSON.stringify(rezultat))
+        return rezultat;
     }
 
     async potrosnjaGoriva(deviceId:string, od:string, do0:string)
     {
-        const res= await this.cass.execute(`SELECT fuellevel FROM telemetry_by_device WHERE deviceId=? AND dan>=? AND dan<=?`,[deviceId, od, do0])
-        const nivogorivo= res.rows.map(r=> r.fuellevel)
+        
+        const startDan= new Date(od)
+        const krajDan= new Date(do0)
+        let dani: string[]=[]
+        let rezultat: number[]=[]
 
-        const potrosnja= nivogorivo[0]- nivogorivo[nivogorivo.length-1]
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
+
+        for(const dan of dani){
+            const res= await this.cass.execute(`SELECT fuellevel FROM telemetry_by_device_day WHERE deviceid=? AND dan=? `,[deviceId, dan])
+            rezultat= rezultat.concat(res.rows.map(r=> r.fuellevel))
+          
+        }
+        if(rezultat.length<1)
+        {
+            return 0
+        }
+        let potrosnja= rezultat[0]- rezultat[rezultat.length-1]
+
+        if(potrosnja<0)
+        {
+            potrosnja=0;
+        }
+        await this.red.set(`analitika:${deviceId}:potrosnja`, JSON.stringify(potrosnja))
+
         return potrosnja
     }
 
 
-    async minMaxBrzina(deviceId:string, od:string, doo:string)
+    async minMaxIProsecnaBrzina(deviceId:string, od:string, doo:string)
     {
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rezultat: number[]=[]
+
         const cached=await this.red.getJSON(`analitika:${deviceId}:speed:od${od}:do${doo}`)
         if(cached) 
             return cached
 
-        const res= await this.cass.execute(`SELECT speed from telemetry_by_device_day 
-            WHERE deviceId=? AND dan>=? AND dan<=?`,
-            [deviceId, od, doo]
-        )
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
+        for(const dan of dani){
+            const res= await this.cass.execute(`SELECT speed from telemetry_by_device_day 
+                WHERE deviceid=? AND dan=? `,
+                [deviceId, dan]
+            )
 
-        const brzine= res.rows.map(r=>r.speed)
-
+            rezultat=rezultat.concat(res.rows.map(r=>r.speed))
+        }   
+        if(rezultat.length==0)
+        {
+            return {min:0, max:0, prosek:0}
+        }
         const rez={
-            min: Math.min(...brzine),
-            max: Math.max(...brzine)
+            min: Math.min(...rezultat),
+            max: Math.max(...rezultat),
+            prosek: Math.round(rezultat.reduce((a,b)=>a+b,0) / rezultat.length)
         }
 
-        await this.red.set(`analitika:${deviceId}:speed:od${od}:do${doo}`,JSON.stringify(rez))
+        await this.red.set(`analitika:${deviceId}:minmaxbrzina:od${od}:do${doo}`,JSON.stringify(rez))
         return rez
     }
 
-    async rpmTrend(deviceId:string, od:string, doo:string)
+    async vratiRpmZaGraf(deviceId:string, od:string, doo:string)
     {
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rezultat: any[]=[]
+
         const cached=await this.red.getJSON(`analitika:${deviceId}:engineRpm:od${od}:do${doo}`)
         if(cached) 
             return cached
 
-        const res= await this.cass.execute(`SELECT engineRpm from telemetry_by_device_day 
-            WHERE deviceId=? AND dan>=? AND dan<=?`,
-            [deviceId, od, doo]
-        )
 
-        const rez= res.rows.map(r=>r.engineRpm)
-        
+        while(startDan<=krajDan)
+        {
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
+        }
 
-        await this.red.set(`analitika:${deviceId}:engineRpm:od${od}:do${doo}`,JSON.stringify(rez))
-        return rez
+        for(const dan of dani){
+                const res= await this.cass.execute(`SELECT engineRpm from telemetry_by_device_day 
+                WHERE deviceid=? AND dan=? ORDER BY ts DESC`,
+                [deviceId, dan]
+            )   
+            rezultat= rezultat.concat(res.rows)
+        }
+
+        await this.red.set(`analitika:${deviceId}:engineRpm:od${od}:do${doo}`,JSON.stringify(rezultat))
+        return rezultat
+    }
+
+
+
+    async dailyAnalitika(deviceId: string, dan:string)
+    {
+        const cached=await this.red.getJSON(`analitika:dnevna:${deviceId}:${dan}`)
+        if(cached)
+        {
+            return cached
+        }
+
+        const res= await this.cass.execute(`SELECT * from telemetry_by_device_day WHERE deviceid=? AND dan=?`, [deviceId,dan])
+
+        if(res.rows.length==0)
+            return;
+
+        console.log(res.rows[0]);
+        const brzine=res.rows.map(r=>r.speed);
+        const temp=res.rows.map(r=>r.enginetemp);
+        const odometar=res.rows.map(r=>r.odometer);
+        const gorivo=res.rows.map(r=>r.fuellevel);
+        const obrtaji=res.rows.map(r=>r.enginerpm);
+
+        console.log(brzine)
+        console.log(temp)
+        console.log(odometar)
+        console.log(gorivo)
+        console.log(obrtaji)
+        const predjeno=odometar[odometar.length-1]-odometar[0]
+        const analitika={
+            deviceId,
+            dan, 
+            AvgSpeed: Math.round(brzine.reduce((a,b)=>a+b,0) / brzine.length),
+            MaxSpeed: Math.max(...brzine),
+            MinSpeed: Math.min(...brzine),
+            Potrosnja: gorivo[0]- gorivo[gorivo.length-1],
+            Predjeno:Math.abs(Number(predjeno)),//mockuj da nemamo negativne 
+            MaxObrtaji: Math.max(...obrtaji),
+            MaxTempMotora:  Math.max(...temp),
+            ProsecnaTemp: Math.round(temp.reduce((a,b)=>a+b,0)/ temp.length)
+        }
+
+        await this.red.setJson(`analitika:dnevna:${deviceId}:${dan}`, analitika, 60*60*24)
+        return analitika
     }
 }

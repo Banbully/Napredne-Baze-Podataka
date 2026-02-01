@@ -17,6 +17,7 @@ import { notificationmodule } from './modules/notifikacije/notifications.module'
 import { GPSModule } from './modules/gps/gps.module';
 
 import { ServisModule } from './modules/servisi/servis.module';
+import { AnalyticsModule } from './modules/analitika/analitcs.module';
 
 
 
@@ -39,6 +40,7 @@ import { ServisModule } from './modules/servisi/servis.module';
     notificationmodule,
     GPSModule,
     ServisModule,
+    AnalyticsModule
   ],
   controllers: [AppController],
   providers: [AppService],

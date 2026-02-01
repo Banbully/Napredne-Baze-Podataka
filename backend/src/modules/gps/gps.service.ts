@@ -98,7 +98,7 @@ export class GPSService
             }
             
             await this.red.setJson(`gps:${deviceId}:latest`,res.rows[0])
-            console.log("cass.hit"+ res.rows[0])
+            
             return res.rows[0]
         }
         catch(err)
@@ -162,7 +162,7 @@ export class GPSService
                     deviceId, 
                     dan
                 ])
-            ruta=ruta.concat(rez.rows[0])
+            ruta=ruta.concat(rez.rows)
         }
         return ruta
     }
