@@ -10,41 +10,76 @@ export class LeaderboardController
     {
 
     }
-
-    @Get('Obrtaji')
-    Obrtaji()
+    @Get('ObrtajiGlobalba')
+    ObrtajiGlobalna()
     {
         return this.leaderboard.leaderboardObrtaji()
     }
 
-    @Get('Gorivo')
-    Gorivo()
+    @Get('GorivoGlobalno')
+    GorivoGloabalno()
     {
         return this.leaderboard.leaderboardGorivo()
     }
 
-    @Get('Brzina')
-    Brzina()
+    @Get('BrzinaGloabalno')
+    BrzinaGlobalno()
     {
         return this.leaderboard.leaderboardBrzina()
     }
 
-    @Get('Odometar')
-    Odometar()
+    @Get('OdometarGloabalno')
+    OdometarGloabalno()
     {
         return this.leaderboard.leaderboardOdometar()
     }
 
-    @Get('Temperatura')
-    Temperatura()
+    @Get('TemperaturaGloabalno')
+    TemperaturaGloabalno()
     {
         return this.leaderboard.leaderboardTemperatura()
     }
 
-    @Get('HealthScore')
-    healthScore()
+    @Get('HealthScoreGloabalno')
+    healthScoreGlobalno()
     {
         return this.leaderboard.getHelthScoreLeaderboard()
+    }
+
+    @Get('ObrtajiDnevna')
+    Obrtaji(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.leaderboardObrtaji()
+    }
+
+    @Get('GorivoDnevna')
+    Gorivo(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.leaderboardGorivo(dan)
+    }
+
+    @Get('BrzinaDnevna')
+    Brzina(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.leaderboardBrzina(dan)
+    }
+
+    @Get('OdometarDnevna')
+    Odometar(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.leaderboardOdometar(dan)
+    }
+
+    @Get('TemperaturaDnevna')
+    Temperatura(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.leaderboardTemperatura(dan)
+    }
+
+    @Get('HealthScoreDnevna')
+    healthScore(@Query("dan") dan?:string)
+    {
+        return this.leaderboard.getHelthScoreLeaderboard(dan)
     }
 
 

@@ -7,6 +7,7 @@ import { alertsDTO, alertsInsertDTO, alertsUpdateDTO } from "./alerts.dto";
 import { telemetryDTO } from "../telemtrija/telemtrics.dto";
 import { Decipher, randomUUID } from "crypto";
 import { json } from "stream/consumers";
+import { telemetryService } from "../telemtrija/telemetrics.service";
 
 @Injectable()
 export class AlertsService{
@@ -46,8 +47,12 @@ export class AlertsService{
                deviceId: deviceId,code: "Prebrza voznja", severity:"Visoka opasnost", message:"Smanjite brzinu",timestamp: new Date().toISOString(),reseno:false})
         }
 
-        return Upozorenja;
+        for (const upozorenje of Upozorenja)
+        {
+            await this.sacuvajUpozorenja(deviceId, upozorenje)
+        };
 
+        return Upozorenja
     }  
     
     async izmeniUpozorenje(upozorenjeId: string, a: alertsUpdateDTO)
@@ -77,16 +82,16 @@ export class AlertsService{
             const predjenoKm = endKm - startKm;
 
 
-            if (predjenoKm > 1000) {
+            if (predjenoKm > 50) {
                 const upozorenje: alertsDTO = {
                     deviceId,
-                    code: "VELIKA_DAVNA_KILOMETRAZA",
+                    code: "Predjeno 50",
                     severity: "SREDNJA_OPASNOST",
-                    message: `Pređeno ${predjenoKm}km u jednom danu. Obratite pažnju !`,
+                    message: `Predjeno je dosta kilometra: Reminder napravi mali servis !`,
                     timestamp: new Date().toISOString(),
                     reseno: false
                 };
-                
+            
                 await this.sacuvajUpozorenja(deviceId, upozorenje);
                 return predjenoKm;
             }
@@ -95,6 +100,11 @@ export class AlertsService{
 
     private async sacuvajUpozorenja(deviceId: string, a: alertsDTO)
     {
+        const allowed= await this.upozorenjaRateLimit(deviceId)
+        if(!allowed)
+        {
+            return; // ako je vise od 5 upozorenja
+        }
         const upozorenjeId= `alert:${randomUUID()}`
         const dan = new Date().toISOString()
         await this.cass.execute
@@ -125,10 +135,10 @@ export class AlertsService{
             message:a.message, 
             reseno:a.reseno
         }
+
         await Promise.all([
             await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
-            await this.red.hset(`alert:${upozorenjeId}:`,"aktivno",JSON.stringify(alert)),
-            await this.red.setJson(`alert:${upozorenjeId}:latest`, alert),
+            await this.red.lPush(`alert:${upozorenjeId}:aktivno`,JSON.stringify(alert)),
             await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert)),
             await this.red.lPush(`alert:queue`, JSON.stringify(alert))
 
@@ -141,17 +151,17 @@ export class AlertsService{
     async vratiUpozorenjaPoId(upozorenjeId: string)
     {
         try{
-            const cached = await this.red.getJSON(`alerts:${upozorenjeId}`)
+            const cached = await this.red.getJSON(`alert:${upozorenjeId}`)
             if(cached)
                 return cached
 
-            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE upozorenjeId=?', [upozorenjeId])
+            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE upozorenjeId=? ', [upozorenjeId])
             if(res.rowLength===0)
             {
                 return null
             }
 
-            await this.red.setJson(`alerts:${upozorenjeId}`, res.rows[0], 86400)
+            await this.red.setJson(`alert:${upozorenjeId}`, res.rows[0], 86400)
 
             return res.rows[0]
         }
@@ -161,19 +171,12 @@ export class AlertsService{
         }
     }
 
-    async 
-    async vratiUpozorenjaPosleDana(deviceId: string, dan: string)
+   
+    async vratiUpozorenjaOdDana(deviceId: string, dan: string)
     {
-        const pretvoriUTS= new Date(dan).toISOString()
-         try
+        try
         {
-            const cached= await this.red.getJSON(`alerts:${deviceId}:active`)
-            if(cached)
-            {
-                return cached;
-            }
-            
-            const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and timestamp<=?`, [deviceId, pretvoriUTS])
+            const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and dan=?`, [deviceId, dan])
             return res.rows;
         }
         catch(err){
@@ -181,10 +184,10 @@ export class AlertsService{
         }
     }
 
-    async vratiSvaResenaUpozorenja(deviceId: string, reseno:boolean)
+    async vratiSvaResenaUpozorenja(deviceId: string, dan:string)
     {
         try{
-        const res= await this.cass.execute(`SELECT * upozorenja WHERE deviceId=? and reseno=?`, [deviceId, reseno])
+        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? AND dan=? reseno=true`, [deviceId, dan])
         return res.rows;
         }
         catch(err){
@@ -192,15 +195,15 @@ export class AlertsService{
         }
     }
 
-    async vratiSvaUpozorenjaZaUredjaj(deviceId:string)
+    async vratiSvaUpozorenjaZaUredjaj(deviceId:string, dan:string)
     {
         try{
-        const cached= await this.red.getJSON(`alert:${deviceId}`)
+        const cached= await this.red.getInrange(`alert:${deviceId}:list`, 0 , 50)
         if(cached)
         {
             return cached
         }
-        const res= await this.cass.execute("SELECT * upozorenja WHERE deviceId=?", [deviceId])
+        const res= await this.cass.execute("SELECT * upozorenja WHERE deviceId=? AND dan=?", [deviceId,dan])
         return res.rows;
         }
         catch(err){
@@ -208,18 +211,15 @@ export class AlertsService{
         }
     }
 
-    async ResiUpozorenje(resen:boolean)
-    {
-
-    }
+  
     async getAktivna(deviceId: string)
     {
-        const cached=await this.red.getInrange(`alerts:${deviceId}`,0,50)
+        const cached=await this.red.getInrange(`alert:${deviceId}:aktivna`,0,50)
         if(cached)
         {
             return cached
         }
-        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE timestamp>=? AND deviceId=?`,[new Date().toISOString(),deviceId]);
+        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and reseno==false`,[deviceId]);
         if(res.rows && res.rowLength>0)
         {
         }
@@ -227,6 +227,22 @@ export class AlertsService{
 
     }
 
+    async upozorenjaRateLimit(deviceId:string, limit=5, ttl=60)
+    {
+        const count= await this.red.incr(`alert:ratelimiter:${deviceId}`);
+        if(count===1)
+        {
+            await this.red.expire(`alert:ratelimiter:${deviceId}`, ttl)
+        }
+
+        return count<limit;
+    }
+    async resiUpozorenje(upozorenjeId:string)
+    {
+        await this.cass.execute(`UPDATE upozorenja SET reseno=true WHERE upozorenjeid=?`,[upozorenjeId])
+        await this.red.del(`akerts:${upozorenjeId}`);
+        return {ok:true}
+    }
 
     async sacuvajSvaUpozorenja(deviceId: string, upozorenja:alertsDTO[])
     {
@@ -252,8 +268,8 @@ export class AlertsService{
         );
 
         await Promise.all([
-            await this.red.del(`alerts:${upozorenjeId}`),
-            await this.red.hDel(`alerts:active`, upozorenjeId)
+            await this.red.del(`alert:${upozorenjeId}`),
+            await this.red.hDel(`alert:active`, upozorenjeId)
         ])
         return {ok: true}; 
     }

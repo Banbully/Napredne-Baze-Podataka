@@ -10,29 +10,42 @@ export class LeaderboardService{
 
     constructor(private readonly red:RedisService, private readonly cass: CassandraService){}
 
-    leaderboardBrzina()
+    async leaderboardBrzina(dan?:string)
     {
-         return this.vratiVozila("leaderboard:speed",5)
+        if(!dan)
+            return await this.vratiVozila("leaderboard:speed",5)
+        return await this.vratiVozila(`leaderboard:speed:${dan}`,5)
     }
-    leaderboardOdometar()
+    async leaderboardOdometar(dan?:string)
     {
-         return this.vratiVozila("leaderboard:odometar",5)
-    }
-    
-    leaderboardGorivo()
-    {
-         return this.vratiVozila("leaderboard:fuel", 5)
-    }
-    
-    leaderboardTemperatura()
-    {
-         return this.vratiVozila("leaderboard:temp", 5)
+
+        if(!dan)
+            return []
+        return await this.vratiVozila(`leaderboard:odometar:${dan}`,5)
     }
     
-    leaderboardObrtaji()
-    {
-          return this.vratiVozila("leaderboard:engineRpm", 5)
+
+    async leaderboardGorivo(dan?:string)
+    {   
+        if(!dan)
+            return await this.vratiVozila("leaderboard:fuel", 5)
+        return await this.vratiVozila(`leaderboard:fuel:${dan}`, 5)
     }
+    
+    async leaderboardTemperatura(dan?:string)
+    {
+        if(!dan)
+            return await this.vratiVozila("leaderboard:temp", 5)
+        return await this.vratiVozila(`leaderboard:temp:${dan}`, 5)
+    }
+    
+    async leaderboardObrtaji(dan?:string)
+    {
+        if(!dan)
+            return await this.vratiVozila("leaderboard:engineRpm", 5)
+        return await this.vratiVozila(`leaderboard:engineRpm`, 5)
+    }
+
 
     async updateLeaderboard(deviceId: string, data:any)
     {
@@ -109,9 +122,11 @@ export class LeaderboardService{
         }
     }
 
-    async getHelthScoreLeaderboard()
-    {
-        return await this.vratiVozila(`leaderboard:healthScore`, 5)
+    async getHelthScoreLeaderboard(dan?:string)
+    {   
+        if(!dan)
+            return await this.vratiVozila(`leaderboard:healthScore`, 5)
+        return await this.vratiVozila(`leaderboard:healthScore:${dan}`, 5)
     }
 
     async updateHealthScore(deviceId: string, score:number,daily:boolean)
@@ -248,8 +263,5 @@ export class LeaderboardService{
             await this.red.del(`leaderboard:fuel`)
         ])
     }
-
-
-
 
 }

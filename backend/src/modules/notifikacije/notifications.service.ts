@@ -20,7 +20,7 @@ export class NotificationService
         };
         const jsonNotf= JSON.stringify(notifikacija)
         await this.red.lPush(`notifications:${deviceId}`, jsonNotf,);
-        await this.red.set(`notifications${deviceId}:latest`, notifikacija)
+        await this.red.set(`notifications${deviceId}:latest`, jsonNotf)
         await this.red.incr(`notifications${deviceId}:aktivne`)
         await this.red.incr(`notifications${deviceId}:neprocitane`)
         return notifikacija
@@ -34,7 +34,8 @@ export class NotificationService
 
     async getNeprocitane(deviceId:string)
     {
-        await this.red.get(`notifications${deviceId}:neprocitane`)
+        const count=await this.red.get(`notifications${deviceId}:neprocitane`)
+        return count||0;
     }
 
     async obrisiNeprocitane(deviceId:string)
@@ -43,7 +44,8 @@ export class NotificationService
     }
     async obrisiHashnotifikacije(deviceId:string)
     {
-        return this.red.hDel(`notifications:${deviceId}`, deviceId)
+        await this.red.hDel(`notifications:${deviceId}`, deviceId)
+        return {ok:true}
     }
 
     async vratiZadnju(deviceId:string)
@@ -55,4 +57,15 @@ export class NotificationService
         return JSON.parse(data);
     }
 
+
+    async obrisiSve(deviceId:string)
+    {
+        await Promise.all([await this.red.del(`notifications:${deviceId}`),
+            await this.red.del(`notifications:${deviceId}:latest`),
+            await this.red.del(`notifications:${deviceId}:total`),
+            await this.red.del(`notifications:${deviceId}:neprocitane`)
+        ])
+
+        return {ok:true}
+    }
 }
