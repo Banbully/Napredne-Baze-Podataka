@@ -587,7 +587,7 @@ async function fetchAndUpdateTelemetry(deviceId) {
 
 
 function updateRightPanel(vehicle) {
-    
+    console.log(vehicle)
     const generalName = document.querySelector(".general-name");
     const statusDiv = document.querySelector(".vehicle-info-right .status");
     const generalId = document.querySelector(".general-id");
