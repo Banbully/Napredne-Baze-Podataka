@@ -7,12 +7,13 @@ import { VehicleDTO, VehicleUpdateDTO } from "./vehicles.dto";
 import { RedisService } from "src/infrastructure/redis/redis.service";
 import { escape } from "querystring";
 import { GPSService } from "../gps/gps.service";
+import { AlertsService } from "../upozorenja/alerts.service";
 
 
 @Injectable()
 export class VehicleService
 {
-    constructor(private readonly cass: CassandraService, private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService, private readonly gpsServicw:GPSService){}
+    constructor(private readonly cass: CassandraService,private readonly alert: AlertsService,  private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService, private readonly gpsServicw:GPSService){}
 
     private timer: Record<string, NodeJS.Timeout>={};
     private aktivno: Record<string, boolean> = {};
@@ -111,12 +112,10 @@ export class VehicleService
             const pretvoriGps= this.api.mapirajLokaciju(povuciApi)
             console.log(pretvori)
             console.log(pretvoriGps)
+            await this.alert.ProceniUpozorenje(deviceId, pretvori)
             await this.red.set(`vozila:${deviceId}:status`, "aktivan")
             await this.gpsServicw.sacuvajTacku(deviceId, pretvoriGps)
             await this.telemtry.ingest(pretvori);},5000)
-
-
-            
         }
         else {
             const timer = this.timer[deviceId];

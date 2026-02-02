@@ -4,10 +4,12 @@ import { RedisService } from "src/infrastructure/redis/redis.service";
 import { NotificationService } from "../notifikacije/notifications.service";
 
 import { alertsDTO, alertsInsertDTO, alertsUpdateDTO } from "./alerts.dto";
-import { telemetryDTO } from "../telemtrija/telemtrics.dto";
+import { sensorDTO, telemetryDTO } from "../telemtrija/telemtrics.dto";
 import { Decipher, randomUUID } from "crypto";
 import { json } from "stream/consumers";
 import { telemetryService } from "../telemtrija/telemetrics.service";
+import { time } from "console";
+import { timestamp } from "rxjs";
 
 @Injectable()
 export class AlertsService{
@@ -22,29 +24,29 @@ export class AlertsService{
         if(telemtrija.batteryLevel<10)
         {
             Upozorenja.push({
-               deviceId:deviceId,code: "SlabaBaterija", severity:"Visoka opasnost", message:"Nivo baterije je slab proverite bateriju",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "SlabaBaterija", severity:"Visoka opasnost", message:"Nivo baterije je slab proverite bateriju",reseno:false})
         }
 
-        if(telemtrija.sensors?.engineTemp>95)
+        if(telemtrija.engineTemp>95)
         {
             Upozorenja.push({
-               deviceId:deviceId,code: "Velika Temperatura motora", severity:"Visoka opasnost", message:"Velika Temperatura Motora proverite!!",timestamp: new Date().toISOString(),reseno:false});
+               deviceId:deviceId,code: "Velika Temperatura motora", severity:"Visoka opasnost", message:"Velika Temperatura Motora proverite!!",reseno:false});
         }
 
-        if(telemtrija.sensors?.dtcCode)
+        if(telemtrija.dtcCode)
         {
             Upozorenja.push({
-               deviceId:deviceId,code: "TEHNICKIPROBLEM", severity:"Visoka opasnost", message:"Hitno proverite vasa kola",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "TEHNICKIPROBLEM", severity:"Visoka opasnost", message:"Hitno proverite vasa kola",reseno:false})
         }
-        if(telemtrija.sensors?.engineRPM>15000)
+        if(telemtrija.engineRPM>15000)
         {
              Upozorenja.push({
-               deviceId:deviceId,code: "Veliki broj obrtaja", severity:"Visoka opasnost", message:"Smanjite broj obrtaja",timestamp: new Date().toISOString(),reseno:false})
+               deviceId:deviceId,code: "Veliki broj obrtaja", severity:"Visoka opasnost", message:"Smanjite broj obrtaja",reseno:false})
         }
-        if(telemtrija.sensors?.speed>130)
+        if(telemtrija.speed>130)
         {
              Upozorenja.push({
-               deviceId: deviceId,code: "Prebrza voznja", severity:"Visoka opasnost", message:"Smanjite brzinu",timestamp: new Date().toISOString(),reseno:false})
+               deviceId: deviceId,code: "Prebrza voznja", severity:"Visoka opasnost", message:"Smanjite brzinu",reseno:false})
         }
 
         for (const upozorenje of Upozorenja)
@@ -55,69 +57,86 @@ export class AlertsService{
         return Upozorenja
     }  
     
-    async izmeniUpozorenje(upozorenjeId: string, a: alertsUpdateDTO)
+    async izmeniUpozorenje(deviceId: string,dan: string, upozorenjeId:string,a: alertsUpdateDTO)
     {
-        await this.cass.execute(`UPDATE upozorenje SET timestamp=?, code=?, severity=?, message=?  WHERE deviceId=?`,
+
+        await this.cass.execute(`UPDATE upozorenja SET code=?, severity=?, message=?, reseno=?  WHERE deviceid=? AND dan=? AND upozorenjeid=?`,
             [
-                a.timestamp,
                 a.code,
                 a.severity,
                 a.message,
-                a.reseno
+                a.reseno,
+                deviceId,
+                dan,
+                upozorenjeId
             ],
         )
 
-        await this.red.del(`alerts:${upozorenjeId}`)
-
+        await this.red.del(`alerts:${deviceId}`)
     }
 
     async proveriOdometar(deviceId: string, start: string, kraj:string)
     {
-        const odometar1 = await this.cass.execute("SELECT odometar FROM telemetry_by_device_day WHERE deviceId=? and pocetak=?",[deviceId, start])
-        const odometar2= await this.cass.execute("SELECT odometar FROM telemetry_by_device_day WHERE deviceId=? and dan=?",[deviceId, kraj])
-
+        const odometar1 = await this.cass.execute("SELECT odometer FROM telemetry_by_device_day WHERE deviceid=? and dan=? LIMIT 1",[deviceId, start])
+        const odometar2= await this.cass.execute("SELECT odometer FROM telemetry_by_device_day WHERE deviceid=? and dan=? LIMIT 1",[deviceId, kraj])
          if (odometar1.rows.length > 0 && odometar2.rows.length > 0) {
-            const startKm = odometar1.rows[0].odometar;
-            const endKm = odometar2.rows[0].odometar;
-            const predjenoKm = endKm - startKm;
-
-
-            if (predjenoKm > 50) {
+            const startKm = odometar1.rows[0].odometer;
+            const endKm = odometar2.rows[0].odometer;
+            console.log("start", startKm)
+            console.log('kraj', endKm)
+            let predjenoKm = endKm - startKm;
+            predjenoKm=Math.abs(predjenoKm)
+            //mock je mnogoooooooooo los pa generise nasumicno odometr pa samo vrati apsolutnu
+            if (predjenoKm > 50000) {
                 const upozorenje: alertsDTO = {
                     deviceId,
                     code: "Predjeno 50",
                     severity: "SREDNJA_OPASNOST",
                     message: `Predjeno je dosta kilometra: Reminder napravi mali servis !`,
-                    timestamp: new Date().toISOString(),
                     reseno: false
                 };
             
                 await this.sacuvajUpozorenja(deviceId, upozorenje);
-                return predjenoKm;
+                
             }
+
+            else if (predjenoKm > 100000) {
+                const upozorenje: alertsDTO = {
+                    deviceId,
+                    code: "Predjeno 100",
+                    severity: "SREDNJA_OPASNOST",
+                    message: `Predjeno je dosta kilometra: Reminder napravi veliki servis !`,
+                    reseno: false
+                };
+            
+                await this.sacuvajUpozorenja(deviceId, upozorenje);
+               
+            }
+            return predjenoKm;
         }
     }
 
-    private async sacuvajUpozorenja(deviceId: string, a: alertsDTO)
+    async sacuvajUpozorenja(deviceId: string, a: alertsDTO)
     {
         const allowed= await this.upozorenjaRateLimit(deviceId)
         if(!allowed)
         {
             return; // ako je vise od 5 upozorenja
         }
-        const upozorenjeId= `alert:${randomUUID()}`
-        const dan = new Date().toISOString()
+        const dan = new Date().toISOString().slice(0,10)
+        const timestamp= new Date().toISOString()
+        const upozorenjeId=`upozorenje${randomUUID()}`
         await this.cass.execute
         (
             `INSERT INTO upozorenja
-            (upozorenjeid,deviceid, timestamp, dan, code, severity, message, reseno)
+            (upozorenjeid,deviceid, dan, timestamp, code, severity, message, reseno)
             VALUES(?,?,?,?,?,?,?,?)`
             ,
             [
                 upozorenjeId,
                 deviceId,
-                a.timestamp,
                 dan,
+                timestamp,
                 a.code,
                 a.severity,
                 a.message,
@@ -126,9 +145,8 @@ export class AlertsService{
         );
 
         const alert={
-            upozorenjeId,
             deviceId,
-            timestamp:a.timestamp,
+            timestamp,
             dan,
             code:a.code||null,
             severity:a.severity||null,
@@ -137,31 +155,28 @@ export class AlertsService{
         }
 
         await Promise.all([
-            await this.red.setJson(`alert:${upozorenjeId}`, alert, 86400),
-            await this.red.lPush(`alert:${upozorenjeId}:aktivno`,JSON.stringify(alert)),
-            await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert)),
+            await this.red.setJson(`alert:${deviceId}:item:${upozorenjeId}`, alert, 86400),
+            !a.reseno && await this.red.lPush(`alert:${deviceId}:${dan}:aktivna`,JSON.stringify(alert))&& 
+            this.red.lPush(`alert:${deviceId}:aktivna`,JSON.stringify(alert)),
+            await this.red.lPush(`alert:${upozorenjeId}:list`, JSON.stringify(alert)),
             await this.red.lPush(`alert:queue`, JSON.stringify(alert))
-
         ])
-        
-
     }
 
   
-    async vratiUpozorenjaPoId(upozorenjeId: string)
+    async vratiPoslednjeUpozorenjeZaDan(deviceId: string, dan:string)
     {
         try{
-            const cached = await this.red.getJSON(`alert:${upozorenjeId}`)
+            const cached = await this.red.getInrange(`alert:${deviceId}:list`,0,0)
             if(cached)
-                return cached
-
-            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE upozorenjeId=? ', [upozorenjeId])
+                return cached.map(r=> JSON.parse(r))
+            
+            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE devicedd=? AND dan=? LIMIT 1', [deviceId, dan])
             if(res.rowLength===0)
             {
                 return null
             }
-
-            await this.red.setJson(`alert:${upozorenjeId}`, res.rows[0], 86400)
+            await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert))
 
             return res.rows[0]
         }
@@ -171,41 +186,43 @@ export class AlertsService{
         }
     }
 
-   
-    async vratiUpozorenjaOdDana(deviceId: string, dan: string)
-    {
-        try
-        {
-            const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and dan=?`, [deviceId, dan])
-            return res.rows;
-        }
-        catch(err){
-            throw new Error("Zao nam je doslo je do greske")
-        }
-    }
 
     async vratiSvaResenaUpozorenja(deviceId: string, dan:string)
     {
         try{
-        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? AND dan=? reseno=true`, [deviceId, dan])
-        return res.rows;
+            const cached = await this.red.getInrange(`alert:${deviceId}:${dan}:aktivna`,0,0)
+            if(cached)
+                return cached.map(r=> JSON.parse(r))   
         }
         catch(err){
             throw new Error("Zao nam je doslo je do greske")
         }
     }
 
-    async vratiSvaUpozorenjaZaUredjaj(deviceId:string, dan:string)
+    async vratiSvaUpozorenjaZaUredjajOdDo(deviceId:string, od:string,doo:string)
     {
-        try{
-        const cached= await this.red.getInrange(`alert:${deviceId}:list`, 0 , 50)
-        if(cached)
+        const startDan= new Date(od)
+        const krajDan= new Date(doo)
+        let dani: string[]=[]
+        let rez:any[]=[]
+        while(startDan<=krajDan)
         {
-            return cached
+            dani.push(startDan.toISOString().slice(0,10))
+            startDan.setDate(startDan.getDate()+1)
         }
-        const res= await this.cass.execute("SELECT * upozorenja WHERE deviceId=? AND dan=?", [deviceId,dan])
-        return res.rows;
-        }
+        try{
+        
+            const cached= await this.red.getInrange(`alert:${deviceId}:list`, 0 , 50)
+            if(cached)
+            {
+                return cached.map(r=> JSON.parse(r))
+            }
+            for(const dan of dani){
+                const res= await this.cass.execute("SELECT * FROM upozorenja WHERE deviceid=? AND dan=?", [deviceId,dan])
+                rez=rez.concat(res.rows)
+            }
+            return rez;
+        }   
         catch(err){
             throw new Error("Zao nam je doslo je do greske")
         }
@@ -217,13 +234,9 @@ export class AlertsService{
         const cached=await this.red.getInrange(`alert:${deviceId}:aktivna`,0,50)
         if(cached)
         {
-            return cached
+            return cached.map(r=>JSON.parse(r))
         }
-        const res= await this.cass.execute(`SELECT * FROM upozorenja WHERE deviceId=? and reseno==false`,[deviceId]);
-        if(res.rows && res.rowLength>0)
-        {
-        }
-        return res.rows
+        return []
 
     }
 
@@ -237,10 +250,11 @@ export class AlertsService{
 
         return count<limit;
     }
-    async resiUpozorenje(upozorenjeId:string)
+    async resiUpozorenje(deviceId:string, dan:string, upozorenjeId:string)
     {
-        await this.cass.execute(`UPDATE upozorenja SET reseno=true WHERE upozorenjeid=?`,[upozorenjeId])
-        await this.red.del(`akerts:${upozorenjeId}`);
+        await this.cass.execute(`UPDATE upozorenja SET reseno=true WHERE deviceid=? and dan=? and upozorenjeid=?`,[deviceId, dan, upozorenjeId])
+        this.red.del(`alert:${deviceId}:one:${upozorenjeId}`),
+        this.red.del(`alert:${deviceId}:aktivna`)
         return {ok:true}
     }
 
@@ -252,35 +266,45 @@ export class AlertsService{
         }
     }
 
-    async obrisiUpozorenja(upozorenjeId:string)
+    async obrisiUpozorenjaZaDan(deviceId:string, dan:string, )
     {
         try{
-        
-        const upozorenje= await this.vratiUpozorenjaPoId(upozorenjeId)
-        if (!upozorenje) {
-            return { ok: false, message: "Upozorenje nije pronađeno" };
-        }
         await this.cass.execute(
-        `DELETE FROM upozorenja WHERE upozorenjeId=?`,
+        `DELETE FROM upozorenja WHERE deviceId=? and dan=?`,
         [
-            upozorenjeId
+            deviceId,dan
+        ]
+        );
+        await Promise.all([
+            await this.red.del(`alert:${deviceId}`),
+            await this.red.hDel(`alert:aktivna`, deviceId)
+        ])
+        return {ok: true}; 
+        }
+        catch(error)
+        {
+            console.log(error)
+        }
+    }
+     async obrisiUpozorenja(deviceId:string, dan:string, upozorenjeId:string)
+    {
+        try{
+        await this.cass.execute(
+        `DELETE FROM upozorenja WHERE deviceid=? and dan=? AND upozorenjeid=?`,
+        [
+            deviceId,dan, upozorenjeId
         ]
         );
 
         await Promise.all([
-            await this.red.del(`alert:${upozorenjeId}`),
-            await this.red.hDel(`alert:active`, upozorenjeId)
+            await this.red.del(`alert:${deviceId}:item:${upozorenjeId}`),
+            await this.red.hDel(`alert:${deviceId}:aktivna`, deviceId)
         ])
         return {ok: true}; 
+        }
+        catch(error)
+        {
+            console.log(error)
+        }
     }
-    catch(error)
-    {
-        console.log(error)
-    }
-    }
-
-
-     
-
-
 }
