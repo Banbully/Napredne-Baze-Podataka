@@ -40,14 +40,14 @@ export class VehicleController
         return this.service.StartujGenerisanje(deviceId, true)
     }
 
-    @Post("PrekiniGenerisanje")
+    @Post("PrekiniGenerisanje/:id")
     PrekiniGenerisanje(@Param('id') deviceId: string)
     {
         return this.service.StartujGenerisanje(deviceId, false)
     }
     
-    @Get("id:Status")
-    vratiStatus(@Query() deviceId: string)
+    @Get("Status/:id")
+    vratiStatus(@Param('id') deviceId: string)
     {
         return this.service.vratiStatus(deviceId)
     }

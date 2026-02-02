@@ -71,25 +71,35 @@ async function loadVehicles() {
                 tableBody.appendChild(tr);
             });
 
-            // Dodaj event listenere za toggle i delete
+//=================Toggle STATUS=====================//
             document.querySelectorAll(".vehicle-toggle").forEach(toggle => {
-                toggle.addEventListener("change", e => {
-                    const deviceId = e.target.dataset.deviceid;
-                    const statusDiv = e.target.closest("tr").querySelector(".status");
+              toggle.addEventListener("change", async (e) => {
 
-                    if (e.target.checked) {
-                        statusDiv.textContent = "Vozilo je pokrenuto";
-                        statusDiv.classList.remove("status-off");
-                        statusDiv.classList.add("status-on");
-                    } else {
-                        statusDiv.textContent = "Vozilo nije pokrenuto";
-                        statusDiv.classList.remove("status-on");
-                        statusDiv.classList.add("status-off");
-                    }
+                  const checkbox = e.target;
+                  const deviceId = checkbox.dataset.deviceid;
+                  const statusDiv = checkbox.closest("tr").querySelector(".status");
 
-                    console.log("Toggle vozilo:", deviceId, e.target.checked);
-                });
+                  if (checkbox.checked) {
+        ukljuciStatus(statusDiv);
+        try {
+            await pokreniGenerisanje(deviceId);
+            startTelemetryPolling(deviceId);   
+        } catch {
+            checkbox.checked = false;
+            iskljuciStatus(statusDiv);
+        }
+      } else {
+        iskljuciStatus(statusDiv);
+        await prekiniGenerisanje(deviceId);
+        stopTelemetryPolling();
+        resetTelemetryUI();             
+      }
+
+
+                  console.log("Toggle vozilo:", deviceId, checkbox.checked);
+              });
             });
+
 
             document.querySelectorAll(".delete-btn").forEach(btn => {
                 btn.addEventListener("click", e => {
@@ -276,7 +286,8 @@ async function loadVehicleList() {
       // 👇 PRVI element dobija active
       if (index === 0) {
         item.classList.add("active");
-        firstDeviceId = vehicle.deviceid; 
+        firstDeviceId = vehicle.deviceid;
+        resetTelemetryUI(); 
       }
 
       item.innerHTML = `
@@ -311,71 +322,29 @@ async function loadVehicleList() {
   }
 }
 
-function updateRightPanel(vehicle) {
-    // gornji deo sa nazivom i statusom
-    const generalName = document.querySelector(".general-name");
-    const statusDiv = document.querySelector(".vehicle-info-right .status");
-    const generalId = document.querySelector(".general-id");
-
-    console.log(vehicle)
-    generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
-    generalId.innerHTML = vehicle.registracija;
-
-    // status vozila (po defaultu nije pokrenuto)
-    statusDiv.textContent = "Vozilo nije pokrenuto";
-    statusDiv.classList.remove("status-on");
-    statusDiv.classList.add("status-off");
-
-    // metrics
-    const metricValues = document.querySelectorAll(".metric-value");
-
-    // primer popunjavanja metrika, redom:
-    // Brzina, Nivo ulja, Kilometraza, Gorivo, Temperatura, Obrtaji, Trenutna lokacija
-    if(metricValues.length >= 7) {
-        metricValues[0].textContent = vehicle.speed ? `${vehicle.speed} Km/h` : "0 Km/h";
-        metricValues[1].textContent = vehicle.fuellevel ? `${vehicle.fuellevel}%` : "0%";
-        metricValues[2].textContent = vehicle.odometer ? `${vehicle.odometer} km` : "0 km";
-        metricValues[3].textContent = vehicle.gorivo || "N/A";
-        metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
-        metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
-        metricValues[6].textContent = vehicle.location || "Nepoznata lokacija";
-    }
-
-    // desni metrics: Do malog servisa i do velikog servisa
-    const rightMetricValues = document.querySelectorAll(".right-metrics-info .metric-value");
-    if(rightMetricValues.length >= 2) {
-        rightMetricValues[0].textContent = vehicle.nextSmallService || "0 km";
-        rightMetricValues[1].textContent = vehicle.nextBigService || "0 km";
-    }
-
-    if (servisOpenBtn) {
-      servisOpenBtn.dataset.deviceid = vehicle.deviceid;
-    }
-    if (servisIstorijaBtn) {
-      servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
-    }
-}
 
 async function loadVehicleDetails(deviceId) {
-  try {
-    const res = await fetch(`http://localhost:3000/Vozila/${deviceId}`);
-    const vehicleDetails = await res.json();
+    stopTelemetryPolling();
+    resetTelemetryUI();
 
-    const vehicle = Array.isArray(vehicleDetails)
-      ? vehicleDetails[0]
-      : vehicleDetails;
+    try {
+        const res = await fetch(`http://localhost:3000/Vozila/${deviceId}`);
+        const data = await res.json();
 
-    if (!vehicle) {
-      console.error("Vozilo nije pronađeno:", vehicleDetails);
-      return;
+        const vehicle = Array.isArray(data) ? data[0] : data;
+        if (!vehicle) return;
+
+        updateVehicleStaticInfo(vehicle);
+
+
+    } catch (err) {
+        console.error("Greška pri učitavanju vozila:", err);
     }
-
-    updateRightPanel(vehicle);
-
-  } catch (err) {
-    console.error("Greška pri učitavanju detalja vozila:", err);
-  }
 }
+
+
+
+
 //=============================================//
 
 //==========INSERT SERVISA================//
@@ -456,9 +425,11 @@ async function loadServiceHistory(vehicleId) {
 
 
         const response = await fetch(`http://localhost:3000/servisi/${vehicleId}`);
+      
         if (!response.ok) throw new Error("Greška pri učitavanju servisa");
 
         const services = await response.json();
+        
 
         services.forEach(servis => {
             console.log(servis);
@@ -481,6 +452,211 @@ async function loadServiceHistory(vehicleId) {
 
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="7">Nije moguće učitati istoriju servisa.</td></tr>`;
     }
 }
+//==========================================================//
+
+//===============LOGIKA ZA GENERISANJE PODATAKA=============//
+async function pokreniGenerisanje(deviceId) {
+    try {
+        const res = await fetch(`http://localhost:3000/Vozila/Generisi/${deviceId}`, {
+            method: "POST"
+        });
+
+        if (!res.ok) {
+            throw new Error("Neuspešno pokretanje generisanja");
+        }
+
+        console.log("Generisanje pokrenuto za:", deviceId);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+async function prekiniGenerisanje(deviceId) {
+    try {
+        const res = await fetch(`http://localhost:3000/Vozila/PrekiniGenerisanje/${deviceId}`, {
+            method: "POST"
+        });
+
+        if (!res.ok) {
+            throw new Error("Neuspešno gašenje generisanja");
+        }
+
+        console.log("Generisanje prekinuto za:", deviceId);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+function ukljuciStatus(statusDiv) {
+    statusDiv.textContent = "Vozilo je pokrenuto";
+    statusDiv.classList.remove("status-off");
+    statusDiv.classList.add("status-on");
+}
+
+function iskljuciStatus(statusDiv) {
+    statusDiv.textContent = "Vozilo nije pokrenuto";
+    statusDiv.classList.remove("status-on");
+    statusDiv.classList.add("status-off");
+}
+
+
+function getSelectedVehicleId() {
+    const activeItem = document.querySelector(".vehicle-item.active");
+    return activeItem ? activeItem.dataset.deviceid : null;
+}
+
+async function fetchAndUpdateTelemetry(deviceId) {
+    // ako vozilo nije selektovano → ništa
+    if (getSelectedVehicleId() !== deviceId) return;
+
+    const today = new Date();
+    const dan = today.toISOString().split("T")[0];
+
+    try {
+        const res = await fetch(
+            `http://localhost:3000/telemetry/${deviceId}/latest?dan=${dan}`
+        );
+        if (!res.ok) return;
+
+        const telemetry = await res.json();
+        updateTelemetryInfo(telemetry);
+
+    } catch (err) {
+        console.error("Telemetry fetch error:", err);
+    }
+}
+
+
+function updateRightPanel(vehicle) {
+    // gornji deo sa nazivom i statusom
+    const generalName = document.querySelector(".general-name");
+    const statusDiv = document.querySelector(".vehicle-info-right .status");
+    const generalId = document.querySelector(".general-id");
+
+    console.log(vehicle)
+    generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
+    generalId.innerHTML = vehicle.registracija;
+
+    // metrics
+    const metricValues = document.querySelectorAll(".metric-value");
+
+    // primer popunjavanja metrika, redom:
+    // Brzina, Nivo ulja, Kilometraza, Gorivo, Temperatura, Obrtaji, Trenutna lokacija
+    if(metricValues.length >= 7) {
+        metricValues[0].textContent = vehicle.speed ? `${vehicle.speed} Km/h` : "0 Km/h";
+        metricValues[1].textContent = vehicle.fuellevel ? `${vehicle.fuellevel}%` : "0%";
+        metricValues[2].textContent = vehicle.odometer ? `${vehicle.odometer} km` : "0 km";
+        metricValues[3].textContent = vehicle.gorivo || "N/A";
+        metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
+        metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
+        metricValues[6].textContent = vehicle.location || "Nepoznata lokacija";
+    }
+
+    // desni metrics: Do malog servisa i do velikog servisa
+    const rightMetricValues = document.querySelectorAll(".right-metrics-info .metric-value");
+    if(rightMetricValues.length >= 2) {
+        rightMetricValues[0].textContent = vehicle.nextSmallService || "0 km";
+        rightMetricValues[1].textContent = vehicle.nextBigService || "0 km";
+    }
+
+    if (servisOpenBtn) {
+      servisOpenBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (servisIstorijaBtn) {
+      servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+}
+
+function updateVehicleStaticInfo(vehicle) {
+    const generalName = document.querySelector(".general-name");
+    const generalId = document.querySelector(".general-id");
+
+    generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
+    generalId.textContent = vehicle.registracija;
+
+    if (servisOpenBtn) {
+        servisOpenBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (servisIstorijaBtn) {
+        servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+}
+
+function updateTelemetryInfo(t) {
+    const metricValues = document.querySelectorAll(".metric-value");
+
+    if (metricValues.length < 7) return;
+
+    metricValues[0].textContent = t.speed ? `${t.speed} Km/h` : "0 Km/h";
+    metricValues[1].textContent = t.fuel ? `${t.fuel}%` : "0%";
+    metricValues[2].textContent = t.odometar ? `${t.odometar} km` : "0 km";
+    metricValues[3].textContent = "N/A";
+    metricValues[4].textContent = t.temp ? `${t.temp} °C` : "N/A";
+    metricValues[5].textContent = t.engineRpm ?? "0";
+    metricValues[6].textContent = "—";
+}
+
+let telemetryInterval = null;
+let currentTelemetryDeviceId = null;
+
+function startTelemetryPolling(deviceId) {
+    stopTelemetryPolling(); 
+
+    currentTelemetryDeviceId = deviceId;
+
+    telemetryInterval = setInterval(() => {
+        if (getSelectedVehicleId() !== deviceId) {
+            stopTelemetryPolling();
+            return;
+        }
+
+        fetchAndUpdateTelemetry(deviceId);
+    }, 2000);
+}
+
+
+function stopTelemetryPolling() {
+    if (telemetryInterval) {
+        clearInterval(telemetryInterval);
+        telemetryInterval = null;
+        currentTelemetryDeviceId = null;
+    }
+}
+
+function resetTelemetryUI() {
+    const metricValues = document.querySelectorAll(".metric-value");
+    metricValues.forEach(el => el.textContent = "0");
+
+    const statusDiv = document.querySelector(".vehicle-info-right .status");
+    if (statusDiv) {
+        statusDiv.textContent = "Vozilo nije pokrenuto";
+        statusDiv.classList.remove("status-on");
+        statusDiv.classList.add("status-off");
+    }
+}
+
+
+async function checkAndStartTelemetry(deviceId) {
+    try {
+        const res = await fetch(`http://localhost:3000/Vozila/Status/${deviceId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (data.status === "aktivan") {
+            startTelemetryPolling(deviceId);
+        } else {
+            stopTelemetryPolling();
+            resetTelemetryUI();
+        }
+
+    } catch (err) {
+        console.error("Greška pri proveri statusa:", err);
+    }
+}
+
+

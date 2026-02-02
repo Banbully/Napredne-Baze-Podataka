@@ -42,7 +42,7 @@ export class ServisService
         );
 
         await this.red.setJson(`servis${servisId}`, servisDTO)
-        await this.red.lPush(`servis${servisDTO.deviceId}:latest`, JSON.stringify(servisDTO));
+        await this.red.setJson(`servis${servisDTO.deviceId}:latest`, servisDTO);
     }
     
     async Update(servisDTO: servisUpdateDTO, servisID: string)
@@ -65,14 +65,13 @@ export class ServisService
         await this.red.del(`servis:${servisId}`);
     }
 
-    async getServisPoId(servisId: string)
+    async getServisPoId(deviceId: string)
     {
-        const cached= await this.red.getJSON(`servis:${servisId}`);
+        const cached= await this.red.getJSON(`servis:${deviceId}`);
         if(cached)
             return cached
-        const res= await this.cass.execute(`SELECT * from service_book WHERE servisid=?`, [servisId])
-        await this.red.setJson(`servis:${servisId}`, res.rows[0], 86400);
-        return res.rows[0];
+        const res= await this.cass.execute(`SELECT * from service_book WHERE deviceId=?`, [deviceId])
+        return res.rows;
     }
     
     async getSviServisi()
