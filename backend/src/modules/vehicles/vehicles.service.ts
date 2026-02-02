@@ -18,9 +18,6 @@ export class VehicleService
 
     private timer: Record<string, NodeJS.Timeout>={};
     private aktivno: Record<string, boolean> = {};
-    
-
-
     async Create(dto: VehicleDTO)
     {
         const deviceId= `vozilo_${randomUUID()}`;
@@ -39,7 +36,7 @@ export class VehicleService
             boja: dto.boja,
             reg: dto.registracija
         }
-        await this.red.setJson(`vehicles:${deviceId}:info`, podaci);
+        await this.red.setJson(`vozila:${deviceId}:info`, podaci);
 
         await this.red.sadd(`vozila:list`, deviceId);
 
@@ -70,7 +67,7 @@ export class VehicleService
             boja: dto.boja,
             reg: dto.registracija
         }
-        await this.red.setJson(`vehicles:${deviceId}:info`, podaci)
+        await this.red.setJson(`vozila:${deviceId}:info`, podaci)
     }
 
     
@@ -85,9 +82,9 @@ export class VehicleService
         ],)
 
         await Promise.all([
-            this.red.del(`vehicles:${id}:info`),
+            this.red.del(`vozila:${id}:info`),
             this.red.del(`vozila:${id}:status`),
-            this.red.sRem(`vehicles:list`, id)
+            this.red.sRem(`vozila:list`, id)
         ]);
 
         return {ok: true}

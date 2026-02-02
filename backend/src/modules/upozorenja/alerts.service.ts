@@ -164,7 +164,6 @@ export class AlertsService{
             !a.reseno && await this.red.lPush(`alert:${deviceId}:${dan}:aktivna`,JSON.stringify(alert))&& 
             this.red.lPush(`alert:${deviceId}:aktivna`,JSON.stringify(alert)),
             await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert)),
-            await this.red.lPush(`alert:queue`, JSON.stringify(alert))
         ])
     }
 
@@ -172,11 +171,11 @@ export class AlertsService{
     async vratiPoslednjeUpozorenjeZaDan(deviceId: string, dan:string)
     {
         try{
-            const cached = await this.red.getInrange(`alert:${deviceId}:list`,0,0)
+            const cached = await this.red.getInrange(`alert:${deviceId}:${dan}:aktivna`,0,0)
             if(cached)
                 return cached.map(r=> JSON.parse(r))
             
-            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE devicedd=? AND dan=? LIMIT 1', [deviceId, dan])
+            const res= await this.cass.execute('SELECT * FROM upozorenja WHERE deviceid=? AND dan=? LIMIT 1', [deviceId, dan])
             if(res.rowLength===0)
             {
                 return null
@@ -285,8 +284,8 @@ export class AlertsService{
     async resiUpozorenje(deviceId:string, dan:string, upozorenjeId:string)
     {
         await this.cass.execute(`UPDATE upozorenja SET reseno=true WHERE deviceid=? and dan=? and upozorenjeid=?`,[deviceId, dan, upozorenjeId])
-        this.red.del(`alert:${deviceId}:one:${upozorenjeId}`),
-        this.red.del(`alert:${deviceId}:aktivna`)
+        await this.red.del(`alert:${deviceId}:item:${upozorenjeId}`),
+        await this.red.del(`alert:${deviceId}:aktivna`)
         return {ok:true}
     }
 
