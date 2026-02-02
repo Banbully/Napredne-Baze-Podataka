@@ -79,21 +79,24 @@ async function loadVehicles() {
                   const deviceId = checkbox.dataset.deviceid;
                   const statusDiv = checkbox.closest("tr").querySelector(".status");
 
-                  if (checkbox.checked) {
-        ukljuciStatus(statusDiv);
-        try {
-            await pokreniGenerisanje(deviceId);
-            startTelemetryPolling(deviceId);   
-        } catch {
-            checkbox.checked = false;
-            iskljuciStatus(statusDiv);
-        }
-      } else {
-        iskljuciStatus(statusDiv);
-        await prekiniGenerisanje(deviceId);
-        stopTelemetryPolling();
-        resetTelemetryUI();             
-      }
+                  if (checkbox.checked) 
+                  {
+                    ukljuciStatus(statusDiv);
+                    try {
+                        await pokreniGenerisanje(deviceId);
+                        startTelemetryPolling(deviceId);   
+                    } catch {
+                        checkbox.checked = false;
+                        iskljuciStatus(statusDiv);
+                    }
+                  } 
+                  else 
+                  {
+                    iskljuciStatus(statusDiv);
+                    await prekiniGenerisanje(deviceId);
+                    stopTelemetryPolling();
+                    resetTelemetryUI();             
+                  }
 
 
                   console.log("Toggle vozilo:", deviceId, checkbox.checked);
@@ -367,9 +370,10 @@ async function loadVehicleList() {
         .querySelectorAll(".vehicle-item")
         .forEach(el => el.classList.remove("active"));
 
-      item.classList.add("active");
+        item.classList.add("active");
 
-      await loadVehicleDetails(item.dataset.deviceid);
+        currentTelemetryDeviceId = item.dataset.deviceId;
+        await loadVehicleDetails(item.dataset.deviceid);
     });
 
       container.appendChild(item);
@@ -388,6 +392,11 @@ async function loadVehicleList() {
 async function loadVehicleDetails(deviceId) {
     stopTelemetryPolling();
     resetTelemetryUI();
+
+    if(proveriDaLiJeVoziloPokrenuto(deviceId))
+    {
+      startTelemetryPolling(deviceId);
+    }
 
     try {
         const res = await fetch(`http://localhost:3000/Vozila/${deviceId}`);
@@ -636,9 +645,11 @@ function updateRightPanel(vehicle) {
 function updateVehicleStaticInfo(vehicle) {
     const generalName = document.querySelector(".general-name");
     const generalId = document.querySelector(".general-id");
+    const generalGorivo = document.getElementById("vrstaGoriva");
 
     generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
     generalId.textContent = vehicle.registracija;
+    generalGorivo.textContent = vehicle.gorivo;
 
     if (servisOpenBtn) {
         servisOpenBtn.dataset.deviceid = vehicle.deviceid;
@@ -656,7 +667,7 @@ function updateTelemetryInfo(t) {
     metricValues[0].textContent = t.speed ? `${t.speed} Km/h` : "0 Km/h";
     metricValues[1].textContent = t.fuel ? `${t.fuel}%` : "0%";
     metricValues[2].textContent = t.odometar ? `${t.odometar} km` : "0 km";
-    metricValues[3].textContent = "N/A";
+    //metricValues[3].textContent = "N/A";
     metricValues[4].textContent = t.temp ? `${t.temp} °C` : "N/A";
     metricValues[5].textContent = t.engineRpm ?? "0";
     metricValues[6].textContent = "—";
@@ -666,16 +677,22 @@ let telemetryInterval = null;
 let currentTelemetryDeviceId = null;
 
 function startTelemetryPolling(deviceId) {
+    
     stopTelemetryPolling(); 
 
     currentTelemetryDeviceId = deviceId;
 
+    console.log("OVO JE ID: ");
+    console.log(currentTelemetryDeviceId);
+    
     telemetryInterval = setInterval(() => {
-        if (getSelectedVehicleId() !== deviceId) {
+        if (getSelectedVehicleId() !== deviceId) 
+        {
             stopTelemetryPolling();
             return;
         }
 
+        console.log("OVO VOZILO GENERISE");
         fetchAndUpdateTelemetry(deviceId);
     }, 2000);
 }
@@ -702,23 +719,17 @@ function resetTelemetryUI() {
 }
 
 
-async function checkAndStartTelemetry(deviceId) {
-    try {
-        const res = await fetch(`http://localhost:3000/Vozila/Status/${deviceId}`);
-        if (!res.ok) return;
+function proveriDaLiJeVoziloPokrenuto(deviceId) {
 
-        const data = await res.json();
+    const toggle = document.querySelector(
+        `.vehicle-toggle[data-deviceid="${deviceId}"]`
+    );
 
-        if (data.status === "aktivan") {
-            startTelemetryPolling(deviceId);
-        } else {
-            stopTelemetryPolling();
-            resetTelemetryUI();
-        }
-
-    } catch (err) {
-        console.error("Greška pri proveri statusa:", err);
+    if (!toggle) {
+        console.warn("Toggle nije pronađen za deviceId:", deviceId);
+        return false;
     }
+
+    
+    return toggle.checked === true;
 }
-
-
