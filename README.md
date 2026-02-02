@@ -1,9 +1,9 @@
 # Napredne-Baze-Podataka
 Projekat iz Naprednih-Baza-Podataka TrailMetrics
 
-Pre pokretabha projekta
+Pre pokretatanja projekta
 
-Za projekat su korisceni image za cassandru 3.11 i redis 3.2.12
+Za projekat su korisceni docker image za cassandru 3.11 i redis 3.2.12
 
 Orvorite folder OPENME koji sadrzi sve komande za kreiranje tabela u Cassandri 
 
