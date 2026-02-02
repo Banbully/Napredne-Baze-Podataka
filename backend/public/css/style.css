@@ -507,3 +507,11 @@ input::placeholder{
 .lokacija-btn {
     margin-block: 13px;
 }
+
+.upozorenja-btn{
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+    border-color: #ffff0063;
+}
+

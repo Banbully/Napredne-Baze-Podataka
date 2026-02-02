@@ -1,6 +1,3 @@
-//logika pokretanja vozila za prvu tabelu
-console.log("Radi");
-
 const tableBody = document.querySelector(".vehicle-table tbody");
 
 
@@ -18,7 +15,6 @@ function deleteVehicle(deviceId, rowElement) {
     }
 
     rowElement.remove();
-    console.log(`Vozilo ${deviceId} obrisano`);
   })
   .catch(error => console.error(error));
 }
@@ -97,9 +93,6 @@ async function loadVehicles() {
                     stopTelemetryPolling();
                     resetTelemetryUI();             
                   }
-
-
-                  console.log("Toggle vozilo:", deviceId, checkbox.checked);
               });
             });
 
@@ -107,7 +100,6 @@ async function loadVehicles() {
             document.querySelectorAll(".delete-btn").forEach(btn => {
                 btn.addEventListener("click", e => {
                     const deviceId = e.target.closest("button").dataset.deviceid;
-                    console.log("Obrisi vozilo:", deviceId);
                 });
             });
 
@@ -156,6 +148,7 @@ const formServisi = document.getElementById("vehicle-servis-form");
 const servisIstorijaBtn = document.getElementById("servis-istorija");
 const analitikaBtn = document.getElementById("analitika");
 const lokacijaBtn = document.getElementById("lokacija");
+const upozorenjaBtn = document.getElementById("upozorenja");
 
 
 //======== FUNKCIJA ZA OTVARANJE MODALA I ZELJENE FORME ======//
@@ -212,6 +205,12 @@ lokacijaBtn.addEventListener("click", () => {
     openLocationModal(id);
 });
 
+upozorenjaBtn.addEventListener("click", () => { 
+    const id = upozorenjaBtn.dataset.deviceid; 
+    openUpozorenjaModal(id); 
+});
+
+
 
 // ================= INSERT VOZILA =================
 form.addEventListener("submit", async (event) => {
@@ -267,7 +266,6 @@ form.addEventListener("submit", async (event) => {
       throw new Error("Greška pri unosu vozila");
     }
 
-    console.log("Vozilo uspešno dodato");
     closeModal();
 
     loadVehicles();
@@ -326,20 +324,6 @@ async function loadLeaderboard() {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //=========================================================//
 
 //==============DRUGA SEKCIJA - ucitavanje vozila =========/
@@ -360,7 +344,7 @@ async function loadVehicleList() {
       item.classList.add("vehicle-item");
       item.dataset.deviceid = vehicle.deviceid; 
 
-      // 👇 PRVI element dobija active
+     
       if (index === 0) {
         item.classList.add("active");
         firstDeviceId = vehicle.deviceid;
@@ -376,7 +360,7 @@ async function loadVehicleList() {
         <p class="vehicle-item-id">${vehicle.registracija}</p>
       `;
 
-      // 👇 klik logika (samo leva strana)
+    
       item.addEventListener("click", async () => {
         document
         .querySelectorAll(".vehicle-item")
@@ -416,7 +400,7 @@ async function loadVehicleDetails(deviceId) {
 
         const vehicle = Array.isArray(data) ? data[0] : data;
         if (!vehicle) return;
-
+        
         updateVehicleStaticInfo(vehicle);
 
 
@@ -424,9 +408,6 @@ async function loadVehicleDetails(deviceId) {
         console.error("Greška pri učitavanju vozila:", err);
     }
 }
-
-
-
 
 //=============================================//
 
@@ -478,7 +459,6 @@ formServisi.addEventListener("submit", async (event) => {
       throw new Error("Greška pri unosu servisa");
     }
 
-    console.log("Servis uspešno dodat");
     closeModal();
 
   } catch (error) {
@@ -515,7 +495,6 @@ async function loadServiceHistory(vehicleId) {
         
 
         services.forEach(servis => {
-            console.log(servis);
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${servis.tipservisa}</td>
@@ -524,11 +503,6 @@ async function loadServiceHistory(vehicleId) {
                 <td>${servis.opis}</td>
                 <td>${servis.datum}</td>
                 <td>${servis.sledeciservis || "/"}</td>
-                <td>
-                    <button class="delete-btn" data-serviceid="${servis.servisId}">
-                        <img src="resources/DeleteIcon.svg" alt="Obriši">
-                    </button>
-                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -550,7 +524,6 @@ async function pokreniGenerisanje(deviceId) {
             throw new Error("Neuspešno pokretanje generisanja");
         }
 
-        console.log("Generisanje pokrenuto za:", deviceId);
     } catch (err) {
         console.error(err);
         throw err;
@@ -567,7 +540,6 @@ async function prekiniGenerisanje(deviceId) {
             throw new Error("Neuspešno gašenje generisanja");
         }
 
-        console.log("Generisanje prekinuto za:", deviceId);
     } catch (err) {
         console.error(err);
         throw err;
@@ -615,34 +587,22 @@ async function fetchAndUpdateTelemetry(deviceId) {
 
 
 function updateRightPanel(vehicle) {
-    // gornji deo sa nazivom i statusom
+    
     const generalName = document.querySelector(".general-name");
     const statusDiv = document.querySelector(".vehicle-info-right .status");
     const generalId = document.querySelector(".general-id");
 
-    console.log(vehicle)
     generalName.textContent = `${vehicle.marka} ${vehicle.model}`;
     generalId.innerHTML = vehicle.registracija;
 
-    // metrics
     const metricValues = document.querySelectorAll(".metric-value");
 
-    // primer popunjavanja metrika, redom:
-    // Brzina, Nivo ulja, Kilometraza, Gorivo, Temperatura, Obrtaji, Trenutna lokacija
     if(metricValues.length >= 7) {
         metricValues[0].textContent = vehicle.speed ? `${vehicle.speed} Km/h` : "0 Km/h";
         metricValues[1].textContent = vehicle.fuellevel ? `${vehicle.fuellevel}%` : "0%";
         metricValues[2].textContent = vehicle.odometer ? `${vehicle.odometer} km` : "0 km";
-        metricValues[3].textContent = vehicle.gorivo || "N/A";
         metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
         metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
-    }
-
-    // desni metrics: Do malog servisa i do velikog servisa
-    const rightMetricValues = document.querySelectorAll(".right-metrics-info .metric-value");
-    if(rightMetricValues.length >= 2) {
-        rightMetricValues[0].textContent = vehicle.nextSmallService || "0 km";
-        rightMetricValues[1].textContent = vehicle.nextBigService || "0 km";
     }
 
     if (servisOpenBtn) {
@@ -656,6 +616,9 @@ function updateRightPanel(vehicle) {
     }
     if (lokacijaBtn) {
       lokacijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (upozorenjaBtn){
+        upozorenjaBtn.dataset.deviceid = vehicle.deviceid;
     }
 
 }
@@ -681,6 +644,9 @@ function updateVehicleStaticInfo(vehicle) {
     if (lokacijaBtn) {
       lokacijaBtn.dataset.deviceid = vehicle.deviceid;
     }
+    if (upozorenjaBtn){
+        upozorenjaBtn.dataset.deviceid = vehicle.deviceid;
+    }
 }
 
 function updateTelemetryInfo(t) {
@@ -690,11 +656,10 @@ function updateTelemetryInfo(t) {
 
     metricValues[0].textContent = t.speed ? `${t.speed} Km/h` : "0 Km/h";
     metricValues[1].textContent = t.fuel ? `${t.fuel}%` : "0%";
-    metricValues[2].textContent = t.odometar ? `${t.odometar} km` : "0 km";
-    //metricValues[3].textContent = "N/A";
+    metricValues[2].textContent = t.odometer ? `${t.odometer} km` : "0 km";
     metricValues[4].textContent = t.temp ? `${t.temp} °C` : "N/A";
     metricValues[5].textContent = t.engineRpm ?? "0";
-    metricValues[6].textContent = "—";
+
 }
 
 let telemetryInterval = null;
@@ -705,9 +670,6 @@ function startTelemetryPolling(deviceId) {
     stopTelemetryPolling(); 
 
     currentTelemetryDeviceId = deviceId;
-
-    console.log("OVO JE ID: ");
-    console.log(currentTelemetryDeviceId);
     
     telemetryInterval = setInterval(() => {
         if (getSelectedVehicleId() !== deviceId) 
@@ -716,7 +678,6 @@ function startTelemetryPolling(deviceId) {
             return;
         }
 
-        console.log("OVO VOZILO GENERISE");
         fetchAndUpdateTelemetry(deviceId);
     }, 2000);
 }
@@ -780,14 +741,12 @@ analitikaPrimeniBtn.addEventListener("click", async () => {
     const apiUrl =
         `http://localhost:3000/analitika/${tipAnalitike}/${deviceId}?od=${od}&do=${doDatuma}`;
 
-    console.log("Pozivam API:", apiUrl);
 
     try {
         const res = await fetch(apiUrl);
         if (!res.ok) throw new Error("Greška u analitici");
 
         const data = await res.json();
-        console.log("Analitika response:", data);
         
         generisiGraf(data, tipAnalitike);
     } catch (err) {
@@ -824,7 +783,7 @@ function generisiGraf(xyData, tipAnalitike) {
               canvas.height / 2
           );
 
-          return; // 👈 BREAK – ništa dalje se ne izvršava
+          return; 
       }
 //============================//
 
@@ -883,23 +842,22 @@ async function openLocationModal(deviceId) {
 
         const { latitude, longitude, zone, accuracy, timestamp } = data;
 
-        // otvori modal
+       
         openModal("location-modal");
 
-        // ukloni prethodnu mapu ako postoji
+        
         if (window.locationMap) {
             window.locationMap.remove();
         }
 
-        // inicijalizuj mapu
+        
         window.locationMap = L.map('map').setView([latitude, longitude], 13);
 
-        // dodaj OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(window.locationMap);
 
-        // marker
+       
         L.marker([latitude, longitude]).addTo(window.locationMap)
             .bindPopup(`Vozilo u zoni: ${zone}<br>Tačnost: ${accuracy}m<br>Vreme: ${new Date(timestamp).toLocaleString()}`)
             .openPopup();
@@ -908,5 +866,44 @@ async function openLocationModal(deviceId) {
         console.error("Greška pri učitavanju lokacije:", err);
     }
 }
+//==============================================================//
 
+//========================UPOZORENJA=========================//
+async function openUpozorenjaModal(deviceId) {
+    try {
+        const res = await fetch(`http://localhost:3000/upozorenja/${deviceId}/aktivnaPoDan`);
+        if (!res.ok) throw new Error("Greška pri učitavanju upozorenja");
+
+        let data = await res.json();
+
+        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        
+        data = data.slice(0, 8);
+
+       
+        const tbody = document.getElementById("upozorenja-body");
+        tbody.innerHTML = "";
+
+        
+        data.forEach(item => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${new Date(item.timestamp).toLocaleString()}</td>
+                <td>${item.code}</td>
+                <td>${item.severity}</td>
+                <td>${item.message}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+   
+        openModal("upozorenja-modal");
+
+    } catch (err) {
+        console.error("Greška pri učitavanju upozorenja:", err);
+    }
+}
 

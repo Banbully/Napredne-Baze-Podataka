@@ -84,7 +84,6 @@
                     <div class="vehicle-general">
                         <div class="general-upper">
                             <h3 class="general-name">Audi A5</h3>
-                            <div class="status status-off">Vozilo nije pokrenuto</div>
                         </div>
                         <p class="general-id">BG-514-AC</p>
                     </div>
@@ -124,14 +123,8 @@
 
                         <div class="right-metrics">
                                 <div class="right-metrics-info">
-                                    <div class="metric-info">
-                                        <p class="metric-heading">Do malog servisa</p>
-                                        <p class="metric-value">5000 km</p>
-                                    </div>
-                                    <div class="metric-info">
-                                        <p class="metric-heading">Do velikog servisa</p>
-                                        <p class="metric-value">21000 km</p>
-                                    </div>
+                                    <p class="metric-heading">Lista upozorenja</p>
+                                    <button class="btn ghost-button upozorenja-btn" id="upozorenja">Upozorenja</button>
                                 </div>
 
                                 <div class="metric-buttons-wrapper">
@@ -274,7 +267,6 @@
                         <th>Opis</th>
                         <th>Datum</th>
                         <th>Sledeći servis</th>
-                        <th>Obriši</th>
                     </tr>
                 </thead>
                 
@@ -368,6 +360,33 @@
             <div id="map" style="height: 300px; width: 100%;"></div>
         </div>
     </div>
+
+    <div id="upozorenja-modal" class="modal-form">
+        <div class="modal upozorenja-modal servis-istorija-modal">
+            <h2>UPOZORENJA</h2>
+            <div class="pre-table upozorenja">
+                <div class="btn-wrapper">
+                    <button id="close-upozorenja-btn" class="btn ghost-button cancel-button form">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table upozorenja-table">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Tip upozorenja</th>
+                        <th>Nivo opasnosti</th>
+                        <th>Poruka</th>
+                    </tr>
+                </thead>
+                <tbody id="upozorenja-body">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 
   </div>
 
