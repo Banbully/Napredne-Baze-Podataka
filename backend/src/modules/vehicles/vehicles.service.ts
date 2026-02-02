@@ -17,6 +17,9 @@ export class VehicleService
     constructor(private readonly cass: CassandraService,private readonly upozorenja: AlertsService,private readonly alert: AlertsService,  private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService, private readonly gpsServicw:GPSService){}
 
     private timer: Record<string, NodeJS.Timeout>={};
+    private aktivno: Record<string, boolean> = {};
+    
+
 
     async Create(dto: VehicleDTO)
     {
@@ -119,17 +122,17 @@ export class VehicleService
             await this.telemtry.ingest(pretvori);},5000)
         }
         else {
-            
             const timer = this.timer[deviceId];
 
             if (timer) {
                 clearInterval(timer);
                 delete this.timer[deviceId];
             }
-
             await this.red.set(`vozila:${deviceId}:status`, "neaktivan")
         }
     }
+
+
 
     async vratiVozilaPoMarci(marka:string)
     {

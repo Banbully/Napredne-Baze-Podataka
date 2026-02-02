@@ -43,34 +43,34 @@ export class telemetryService
             );
 
             console.log("HSET DATA:", {
-  speed: payload.speed,
-  engineTemp: payload.engineTemp,
-  engineRpm: payload.engineRpm,
-  fuelLevel: payload.fuelLevel,
-  odometer: payload.odometer,
-  batteryLevel: payload.batteryLevel,
-  timestamp: payload.ts
-});
+            speed: payload.speed,
+            engineTemp: payload.engineTemp,
+            engineRpm: payload.engineRpm,
+            fuelLevel: payload.fuelLevel,
+            odometer: payload.odometer,
+            batteryLevel: payload.batteryLevel,
+            timestamp: payload.ts
+            });
 
 
-console.log("ZADD CHECK:", {
-  deviceId: payload.deviceId,
-  speed: payload.speed,
-  engineTemp: payload.engineTemp,
-  engineRpm: payload.engineRpm,
-  fuelLevel: payload.fuelLevel,
-  odometer: payload.odometer
-});
+            console.log("ZADD CHECK:", {
+            deviceId: payload.deviceId,
+            speed: payload.speed,
+            engineTemp: payload.engineTemp,
+            engineRpm: payload.engineRpm,
+            fuelLevel: payload.fuelLevel,
+            odometer: payload.odometer
+            });
 
 
-console.log("ZADD CHECK:", {
-  deviceId: payload.deviceId,
-  speed: payload.speed,
-  engineTemp: payload.engineTemp,
-  engineRpm: payload.engineRpm,
-  fuelLevel: payload.fuelLevel,
-  odometer: payload.odometer
-});
+            console.log("ZADD CHECK:", {
+            deviceId: payload.deviceId,
+            speed: payload.speed,
+            engineTemp: payload.engineTemp,
+            engineRpm: payload.engineRpm,
+            fuelLevel: payload.fuelLevel,
+            odometer: payload.odometer
+            });
 
             await this.red.hset(`telemetry:${payload.deviceId}:latest`,"speed", String(payload.speed))
             await this.red.hset(`telemetry:${payload.deviceId}:latest`,"temp", String(payload.engineTemp))
@@ -96,7 +96,6 @@ console.log("ZADD CHECK:", {
             return{ok : true}
     
     }
-
 
 
     async DeleteZaDan(deviceId: string, dan:string)

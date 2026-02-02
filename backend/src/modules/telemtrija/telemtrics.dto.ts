@@ -66,7 +66,7 @@ export class sensorDTO
     @IsOptional() @IsNumber() engineRPM?: number;
     @IsOptional() @IsNumber() fuelLevel?: number;
     @IsOptional() @IsNumber() engineTemp?: number;
-    @IsOptional() @IsNumber() odometar?: number;
+    @IsOptional() @IsNumber() odometer?: number;
     @IsOptional() @IsNumber() dtcCode?: string | null;
 }
 
