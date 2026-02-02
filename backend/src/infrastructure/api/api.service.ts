@@ -21,9 +21,14 @@ export class ApiService
         
             return this.generisiFallbackPodatke();
         }
+            const apiData= json.data[0]
 
-            console.log("API RESPONSE:", json.data[0]);
-            return json.data[0];
+            if(apiData.sensors===null)
+            {
+                return this.generisiFallbackPodatke(apiData)
+            }
+            console.log("API RESPONSE:", apiData);
+            return apiData;
         }
         catch (err) {
             return this.generisiFallbackPodatke();
@@ -31,8 +36,20 @@ export class ApiService
     
     }
     //ako nam padne api da ne pada cela app
-    private generisiFallbackPodatke() 
+    private generisiFallbackPodatke(apiData?: any) 
     {
+        const fixData= {...apiData}
+        if (fixData.sensors === null) {
+            fixData.sensors = {
+            speed: Math.floor(Math.random() * 120) + 30,
+            engineTemp: Math.floor(Math.random() * 40) + 80,
+            engineRpm: Math.floor(Math.random() * 3000) + 1500,
+            fuelLevel: Math.floor(Math.random() * 60) + 20,
+            odometer: Math.floor(Math.random() * 100000) + 5000,
+            gpsLat: 44.7866 + (Math.random() * 0.1 - 0.05),
+            gpsLon: 20.4489 + (Math.random() * 0.1 - 0.05)
+        };
+        }
         const now = new Date().toISOString();
         return {
             lastSync: now,

@@ -269,7 +269,7 @@ form.addEventListener("submit", async (event) => {
     closeModal();
 
     loadVehicles();
-    loadVehicleList;
+    loadVehicleList();
 
   } catch (error) {
     console.error(error);
