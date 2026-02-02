@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrailMetrics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <head class="navbar">
+        <div class="container nav-logo-wrapper">
+            <div class="nav-logo">
+                <img src="resources/NavbarLogo.svg" alt="">
+            </div> 
+        </div>
+    </head>
+    
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>VOZILA</h2>
+                    <p>Ovde se nalazi lista svih vasih vozila.</p>
+                </div>
+                <div class="btn-wrapper">
+                    <button id="insert-vehicle-btn" class="btn">
+                        <span class="btn-icon">
+                                <img src="resources/PlusIcon.svg" alt="">
+                        </span>
+                        <span class="btn-text">Dodaj vozilo</span>
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table">
+                <thead>
+                    <tr>
+                        <th>Vrsta vozila</th>
+                        <th>Model</th>
+                        <th>Registracija</th>
+                        <th>Status</th>
+                        <th>Pokreni vozilo</th>
+                        <th>Izbriši vozilo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>    
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="pre-table">
+                <div class="h2-wrapper">
+                    <h2>INFORMACIJE U VOZILU</h2>
+                    <p>Izaberite vozilo za koje zelite da pratite</p>
+                </div>
+            </div>
+            <div class="vehcile-info-wrapper">
+                <div class="vehicle-info-left" id="vehicleList">
+
+                    <div class="vehicle-item">
+                        <div class="vehicle-item-name">
+                            <img class="icon-vehicle-table" src="resources/Purple-CarIcon.svg" alt="">
+                            <p class="vehicle-item-type r-m">Mercedes</p>
+                            <p class="vehicle-item-type">A Class</p>
+                        </div>
+                        <p class="vehicle-item-id">LE-848-VB</p>
+                    </div>
+                  <div class="vehicle-item active">
+                        <div class="vehicle-item-name">
+                            <img class="icon-vehicle-table" src="resources/Purple-CarIcon.svg" alt="">
+                            <p class="vehicle-item-type">Audi A5</p>
+                        </div>
+                        <p class="vehicle-item-id">BG-514-AC</p>
+                    </div>
+
+
+                </div>
+                <div class="vehicle-info-right">
+                    <div class="decoration-circle"></div>
+                    <div class="vehicle-general">
+                        <div class="general-upper">
+                            <h3 class="general-name">Audi A5</h3>
+                        </div>
+                        <p class="general-id">BG-514-AC</p>
+                    </div>
+                    <div class="vehicle-metrics">
+                        <div class="left-metrics">
+                            <div class="metric-info">
+                                <p class="metric-heading">Brzina</p>
+                                <p class="metric-value">80 Km/h</p>
+                            </div>
+                                <div class="metric-info">
+                                <p class="metric-heading">Nivo ulja</p>
+                                <p class="metric-value">70%</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Kilometraza</p>
+                                <p class="metric-value">125 215km</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Gorivo</p>
+                                <p class="metric-value" id="vrstaGoriva">10 l</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Temperatura</p>
+                                <p class="metric-value">50 C</p>
+                            </div>
+                            <div class="metric-info">
+                                <p class="metric-heading">Obrtaji motora</p>
+                                <p class="metric-value">3000</p>
+                            </div>
+                            <div class="metric-info-btns">
+                                <button class="btn" id="lokacija">Lokacija</button>
+                                <button class="btn ghost-button form" id="analitika">Analitika</button>
+                            </div>
+                        </div>
+
+                        <div class="decoration-line"></div>
+
+                        <div class="right-metrics">
+                                <div class="right-metrics-info">
+                                    <p class="metric-heading">Lista upozorenja</p>
+                                    <button class="btn ghost-button upozorenja-btn" id="upozorenja">Upozorenja</button>
+                                </div>
+
+                                <div class="metric-buttons-wrapper">
+                                    <button class="btn ghost-button" id="servis-istorija">Istorija servisa</button>
+                                    <button class="btn" id="servis-open">Servisiraj vozilo</button>
+                                </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="pre-table center-p-t">
+                <div class="h2-wrapper">
+                    <h2>LEADERBOARD</h2>
+                    <p>Rang lista vozila na osnovu izabranog kriterijuma.</p>
+                </div>
+
+                <div class="btn-wrapper">
+
+                    <div class="radio-wrapper">
+                        <label>
+                            <input type="radio" name="scope" value="Globalno" checked>
+                            Globalno
+                        </label>
+                        <label>
+                            <input type="radio" name="scope" value="Dnevna">
+                            Dnevna
+                        </label>
+                    </div>
+
+                    <select class="select-filter">           
+                        <option value="Gorivo">Potrošnja goriva</option>
+                        <option value="Brzina">Najveća brzina</option>
+                        <option value="Temperatura">Temperatura motora</option>
+                        <option value="Obrtaji">Obrtaji motora</option>
+                    </select>
+
+
+                    <button class="btn" id="leaderboardBtn">
+                        Primeni
+                    </button>
+                </div>
+            </div>
+
+            <table class="vehicle-table leaderboard">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Marka</th>
+                        <th>Model</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+
+            <tbody id="leaderboard-body">
+            </tbody>
+
+            </table>
+        </div>
+
+    </section>
+
+    <footer>
+        <div class="container">
+            <img src="resources/FooterLogo.svg" alt="">
+        </div>
+    </footer>
+
+   <div class="modal-overlay">
+    <form id="vehicle-insert-form" class="modal-form">
+        <div class="modal">
+            <h2>UNESITE VOZILO</h2>
+            <div class="insert-vehicle-inputs-wrapper">
+                <input id="v-marka" type="text" placeholder="Marka">
+                <input id="v-model" type="text" placeholder="Model">
+                <input id="v-boja" type="text" placeholder="Boja">
+                <input id="v-godina" type="number" placeholder="Godina Proizvodnje">
+                <input id="v-gorivo" type="text" placeholder="Gorivo">
+                <input id="v-reg" type="text" placeholder="Registracija">
+            </div>
+            <div class="vehicle-insert-buttons-wrapper">
+                <button type="submit" class="btn center" id="vehicle-insert-btn-close">Posalji</button>
+                <button type="button" class="btn center ghost-button form cancel-button">Otkazi</button>
+            </div>    
+        </div>
+    </form>
+
+    <form id="vehicle-servis-form" class="modal-form">
+        <div class="modal">
+            <h2>SERVISIRAJTE VOZILO</h2>
+            <div class="insert-vehicle-inputs-wrapper">
+                    <select id="s-tip" required>
+                        <option value="" disabled selected>Tip servisa</option>
+                        <option value="Mali servis">Mali servis</option>
+                        <option value="Veliki servis">Veliki servis</option>
+                        <option value="Servis guma">Servis guma</option>
+                        <option value="Servis klime">Servis klime</option>
+                        <option value="Servis elektronike">Servis elektronike</option>
+                    </select>
+
+                    <input id="s-majstor" type="text" placeholder="Ime majstora" required>
+                    <input id="s-datum" type="date" required>
+                    <input id="s-cena" type="number" placeholder="Cena servisa" min="0" step="0.01" required>
+                    <input id="s-opis" type="text" placeholder="Opis" required>Sledeci servis
+                    <input id="s-sledeciServis" type="date">
+                </div>
+                <div class="vehicle-insert-buttons-wrapper">
+                    <button type="submit" class="btn center" id="servis-submit">Sačuvaj servis</button>
+                    <button type="button" class="btn center ghost-button form cancel-button">Otkaži</button> 
+                </div>
+        </div>
+    </form>
+
+    <div id="service-history-modal" class="modal-form">
+        <div class="modal servis-istorija-modal">
+            <h2>ISTORIJA SERVISA</h2>
+            <div class="pre-table servis-istorija">
+                <div class="h2-wrapper">
+                    <p><span class="servis-istorija-header"> </span></p>
+                </div>
+                <div class="btn-wrapper">
+                    <button id="close-service-history-btn" class="btn ghost-button servis cancel-button">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table service-history-table">
+                <thead>
+                    <tr>
+                        <th>Tip servisa</th>
+                        <th>Ime majstora</th>
+                        <th>Cena</th>
+                        <th>Opis</th>
+                        <th>Datum</th>
+                        <th>Sledeći servis</th>
+                    </tr>
+                </thead>
+                
+                <tbody id="service-history-body">
+                    <tr>
+                        <td>Mali servis</td>
+                        <td>Marko Petrović</td>
+                        <td>5000</td>
+                        <td>Zamena ulja i filtera</td>
+                        <td>2026-01-15</td>
+                        <td>2026-07-15</td>
+                        <td>
+                            <button class="delete-btn" data-serviceid="servis-123">
+                                <img src="resources/DeleteIcon.svg" alt="Obriši">
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+
+
+            </table>
+        </div>
+    </div> 
+
+    <div id="analitika-form" class="modal-form">
+        <div class="modal analitika-modal">
+
+            <h2>ANALITIKA</h2>
+
+            <div class="pre-table analitika-pretable">
+                <div class="h2-wrapper">
+                    <p>
+                        <span class="analitika-header">
+                            Analitika za izabrano vozilo
+                        </span>
+                    </p>
+                </div>
+
+                <div class="btn-wrapper">
+                    <button id="close-analitika-btn"
+                            class="btn ghost-button cancel-button form">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+
+            <div class="analitika-filters">
+
+                <div class="filter-group">
+                    <label for="analitika-od-datuma">Od datuma</label>
+                    <input type="date"
+                        id="analitika-od-datuma"
+                        class="input-field">
+                </div>
+
+                <div class="filter-group">
+                    <label for="analitika-tip">Tip analitike</label>
+                    <select id="analitika-tip" class="select-filter">
+                        <option value="analitikaBrzina">Brzina</option>
+                        <option value="analitikaOdometar">Odometar</option>
+                        <option value="analitikaTemperatura">Temperatura</option>
+                        <option value="analitikaPotrosnja">Potrošnja</option>
+                        <option value="analitikaObrtaji">Obrtaji</option>
+                    </select>
+                </div>
+
+                <div class="filter-group apply-wrapper">
+                    <button id="analitika-primeni-btn" class="btn">
+                        Primeni
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="analitika-content">
+                <canvas id="analitika-chart"></canvas>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div id="location-modal" class="modal-form">
+        <div class="modal analitika-modal">
+            <h2>Lokacija vozila</h2>
+            <div class="btn-wrapper">
+            <button id="close-location-btn" class="btn ghost-button cancel-button form lokacija-btn">
+                Zatvori
+            </button>
+            </div>
+            <div id="map" style="height: 300px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <div id="upozorenja-modal" class="modal-form">
+        <div class="modal upozorenja-modal servis-istorija-modal">
+            <h2>UPOZORENJA</h2>
+            <div class="pre-table upozorenja">
+                <div class="btn-wrapper">
+                    <button id="close-upozorenja-btn" class="btn ghost-button cancel-button form">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+            <table class="vehicle-table upozorenja-table">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Tip upozorenja</th>
+                        <th>Nivo opasnosti</th>
+                        <th>Poruka</th>
+                    </tr>
+                </thead>
+                <tbody id="upozorenja-body">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+  </div>
+
+    <script src="js/script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
+</body>
+</html>
