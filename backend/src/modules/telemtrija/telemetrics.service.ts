@@ -76,20 +76,20 @@ export class telemetryService
             await this.red.hset(`telemetry:${payload.deviceId}:latest`,"temp", String(payload.engineTemp))
             await this.red.hset(`telemetry:${payload.deviceId}:latest`,"engineRpm" ,String(payload.engineRpm))
             await this.red.hset(`telemetry:${payload.deviceId}:latest`, "fuel",String(payload.fuelLevel))
-            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometar", String(payload.odometar))
+            await this.red.hset(`telemetry:${payload.deviceId}:latest`,"odometer", String(payload.odometer))
 
             await this.red.zAdd(`leaderboard:speed`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp`, payload.engineTemp, payload.deviceId)
             await this.red.zAdd(`leaderboard:fuel`, payload.fuelLevel, payload.deviceId)
-            await this.red.zAdd(`leaderboard:odometar`, payload.odometer, payload.deviceId)
+            await this.red.zAdd(`leaderboard:odometer`, payload.odometer, payload.deviceId)
 
             //console.log("zadd",t1)
             await this.red.zAdd(`leaderboard:speed:${dan}`, payload.speed, payload.deviceId)
             await this.red.zAdd(`leaderboard:engineRpm:${dan}`, payload.engineRpm, payload.deviceId)
             await this.red.zAdd(`leaderboard:temp:${dan}`, payload.engineTemp, payload.deviceId)
             await this.red.zAdd(`leaderboard:fuel:${dan}`, payload.fuelLevel, payload.deviceId)
-            await this.red.zAdd(`leaderboard:odometar:${dan}`, payload.odometer, payload.deviceId)
+            await this.red.zAdd(`leaderboard:odometer:${dan}`, payload.odometer, payload.deviceId)
             await this.upozorenje.ProceniUpozorenje(payload.deviceId, payload)
             await this.odrzavanje.evaluate(payload.deviceId, payload)
             
@@ -141,7 +141,7 @@ export class telemetryService
         await this.red.hset(`telemetry:${deviceId}:latest`,"temp", String(rez.engineTemp))
         await this.red.hset(`telemetry:${deviceId}:latest`,"engineRpm" ,String(rez.engineRpm))
         await this.red.hset(`telemetry:${deviceId}:latest`, "fuel",String(rez.fuelLevel))
-        await this.red.hset(`telemetry:${deviceId}:latest`,"odometar", String(rez.odometer))
+        await this.red.hset(`telemetry:${deviceId}:latest`,"odometer", String(rez.odometer))
         console.log("rezhit"+rez)
         return rez;
     }

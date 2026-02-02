@@ -416,7 +416,7 @@ async function loadVehicleDetails(deviceId) {
 
         const vehicle = Array.isArray(data) ? data[0] : data;
         if (!vehicle) return;
-
+        
         updateVehicleStaticInfo(vehicle);
 
 
@@ -633,7 +633,6 @@ function updateRightPanel(vehicle) {
         metricValues[0].textContent = vehicle.speed ? `${vehicle.speed} Km/h` : "0 Km/h";
         metricValues[1].textContent = vehicle.fuellevel ? `${vehicle.fuellevel}%` : "0%";
         metricValues[2].textContent = vehicle.odometer ? `${vehicle.odometer} km` : "0 km";
-        metricValues[3].textContent = vehicle.gorivo || "N/A";
         metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
         metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
     }
@@ -669,6 +668,9 @@ function updateVehicleStaticInfo(vehicle) {
     generalId.textContent = vehicle.registracija;
     generalGorivo.textContent = vehicle.gorivo;
 
+    console.log("OVO JE VOZILO\n\n\n");
+    console.log(vehicle);
+    console.log("OVO JE VOZILO\n\n\n");
     if (servisOpenBtn) {
         servisOpenBtn.dataset.deviceid = vehicle.deviceid;
     }
@@ -690,11 +692,11 @@ function updateTelemetryInfo(t) {
 
     metricValues[0].textContent = t.speed ? `${t.speed} Km/h` : "0 Km/h";
     metricValues[1].textContent = t.fuel ? `${t.fuel}%` : "0%";
-    metricValues[2].textContent = t.odometar ? `${t.odometar} km` : "0 km";
-    //metricValues[3].textContent = "N/A";
+    metricValues[2].textContent = t.odometer ? `${t.odometer} km` : "0 km";
     metricValues[4].textContent = t.temp ? `${t.temp} °C` : "N/A";
     metricValues[5].textContent = t.engineRpm ?? "0";
     metricValues[6].textContent = "—";
+
 }
 
 let telemetryInterval = null;
