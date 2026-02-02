@@ -105,12 +105,11 @@ export class VehicleService
 
     async VratiVoziloPoId(deviceId: string) 
     { 
-        /*
         const kesiran = await this.red.getJSON(`vehicles:${deviceId}:info`);
         if (kesiran) {
             console.log(kesiran)
             return kesiran;
-        } */
+        } 
         const res = await this.cass.execute(`SELECT * FROM vozila WHERE deviceid=?`, [deviceId]);
         if (res.rowLength === 0) {
             throw Error("Zao nam je vozila ne postoji");
