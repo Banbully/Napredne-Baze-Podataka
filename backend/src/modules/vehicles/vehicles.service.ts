@@ -30,7 +30,16 @@ export class VehicleService
             [deviceId, dto.marka, dto.model, dto.gorivo, dto.godinaProizvodnje,dto.boja, dto.registracija],
         )
 
-        await this.red.setJson(`vehicles:${deviceId}:info`, dto,86400);
+        const podaci={
+            deviceId,
+            marka:dto.marka,
+            model: dto.model,
+            gorivo: dto.gorivo,
+            godinaProizvodnje: dto.godinaProizvodnje,
+            boja: dto.boja,
+            reg: dto.registracija
+        }
+        await this.red.setJson(`vehicles:${deviceId}:info`, podaci);
 
         await this.red.sadd(`vozila:list`, deviceId);
 
@@ -41,7 +50,7 @@ export class VehicleService
         await this.cass.execute(
             `UPDATE vozila
             SET marka=? , model=?, gorivo=?, godina=?, boja=?, registracija=?
-            WHERE deviceId=?`
+            WHERE deviceid=?`
         ,
         [
             dto.marka,
@@ -52,7 +61,16 @@ export class VehicleService
             dto.registracija,
             deviceId
         ])
-        await this.red.setJson(`vehicles:${deviceId}:info`, dto)
+         const podaci={
+            deviceId,
+            marka:dto.marka,
+            model: dto.model,
+            gorivo: dto.gorivo,
+            godinaProizvodnje: dto.godinaProizvodnje,
+            boja: dto.boja,
+            reg: dto.registracija
+        }
+        await this.red.setJson(`vehicles:${deviceId}:info`, podaci)
     }
 
     
@@ -67,7 +85,7 @@ export class VehicleService
         ],)
 
         await Promise.all([
-            this.red.del(`vehicle:${id}:info`),
+            this.red.del(`vehicles:${id}:info`),
             this.red.del(`vozila:${id}:status`),
             this.red.sRem(`vehicles:list`, id)
         ]);
@@ -90,6 +108,7 @@ export class VehicleService
         /*
         const kesiran = await this.red.getJSON(`vehicles:${deviceId}:info`);
         if (kesiran) {
+            console.log(kesiran)
             return kesiran;
         } */
         const res = await this.cass.execute(`SELECT * FROM vozila WHERE deviceid=?`, [deviceId]);
