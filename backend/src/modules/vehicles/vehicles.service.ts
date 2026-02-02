@@ -8,12 +8,13 @@ import { RedisService } from "src/infrastructure/redis/redis.service";
 import { escape } from "querystring";
 import { GPSService } from "../gps/gps.service";
 import { AlertsService } from "../upozorenja/alerts.service";
+import { alertsDTO } from "../upozorenja/alerts.dto";
 
 
 @Injectable()
 export class VehicleService
 {
-    constructor(private readonly cass: CassandraService,private readonly alert: AlertsService,  private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService, private readonly gpsServicw:GPSService){}
+    constructor(private readonly cass: CassandraService,private readonly upozorenja: AlertsService,private readonly alert: AlertsService,  private readonly red: RedisService,  private readonly api: ApiService, private readonly telemtry: telemetryService, private readonly gpsServicw:GPSService){}
 
     private timer: Record<string, NodeJS.Timeout>={};
 
@@ -107,6 +108,9 @@ export class VehicleService
             const pretvori= this.api.mapirajApi(povuciApi, deviceId);
            
             const pretvoriGps= this.api.mapirajLokaciju(povuciApi)
+            const alerts= this.api.mapirajAlerts(povuciApi)
+            console.log(alerts)
+            await this.upozorenja.sacuvajUpozorenja(deviceId, alerts)
             console.log(pretvori)
             console.log(pretvoriGps)
             await this.alert.ProceniUpozorenje(deviceId, pretvori)

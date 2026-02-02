@@ -51,19 +51,19 @@ export class ApiService
     return gpsDto;
     }
 
-     mapirajAlerts(apiPodaci: any, deviceId:string)
+     mapirajAlerts(apiPodaci: any)
     {
-    const alert = new alertsDTO();
-       if (apiPodaci?.alerts) 
-    {
-        alert.deviceId= deviceId;
-        alert.code = apiPodaci.alerts?.code;
-        alert.message = apiPodaci.alerts?.message;
-        alert.severity = apiPodaci.alerts?.severity;
-        alert.message = apiPodaci.alerts?.accuracy;
-    }
-    
-    return alert;
+      if(!Array.isArray(apiPodaci.alerts)) return [];
+
+         return apiPodaci.alerts
+         .filter(a => a.code && a.message && a.severity)
+         .map(a => ({
+            code: a.code,
+            message: a.message,
+            severity: a.severity,
+            timestamp: new Date().toISOString(),
+            reseno: false
+     }));
     }
 
 

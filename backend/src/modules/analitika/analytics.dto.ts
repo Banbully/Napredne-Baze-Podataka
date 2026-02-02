@@ -11,12 +11,12 @@ export class AnalyticsDTO
 
 export class sensorDTO
 {
-    @IsOptional() @IsNumber() speed?: number;
-    @IsOptional() @IsNumber() engineRPM?: number;
-    @IsOptional() @IsNumber() fuelLevel?: number;
-    @IsOptional() @IsNumber() engineTemp?: number;
-    @IsOptional() @IsNumber() odometar?: number;
-    @IsOptional() @IsNumber() dtcCode?: string | null;
+    @IsOptional() @IsNumber() speed: number;
+    @IsOptional() @IsNumber() engineRPM: number;
+    @IsOptional() @IsNumber() fuelLevel: number;
+    @IsOptional() @IsNumber() engineTemp: number;
+    @IsOptional() @IsNumber() odometar: number;
+    @IsOptional() @IsNumber() dtcCode: string | null;
 }
 
 export class GrafikonDTO{

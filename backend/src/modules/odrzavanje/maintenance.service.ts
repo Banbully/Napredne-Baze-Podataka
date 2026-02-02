@@ -4,19 +4,20 @@ import { CassandraService } from "src/infrastructure/cassandra/cassandra.service
 import { RedisService } from "src/infrastructure/redis/redis.service";
 import { telemetryDTO } from "../telemtrija/telemtrics.dto";
 import { json } from "stream/consumers";
+import { sensorDTO } from "../analitika/analytics.dto";
 
 @Injectable()
 export class OdrzavanjeService
 {
+    //note ovde koristi sensordto iz analitike 
     constructor(private readonly redis: RedisService,
         private readonly cass: CassandraService
     )
     {
 
     }
-    async evaluate(deviceId:string, telemetry: telemetryDTO)
+    async evaluate(deviceId:string, telemetry: sensorDTO)
     {
-        const Obavestenje=[]
         
         const prediktor= await this.predict(telemetry);
 
@@ -30,7 +31,7 @@ export class OdrzavanjeService
             (deviceid, ts, nivo_opasnosti, risk_score, poruka)
             VALUES(?,?,?,?,?)`,
             [
-                telemetry.deviceId, prediktor.timestamp, prediktor.level, prediktor.score, prediktor.poruka 
+                deviceId, prediktor.timestamp, prediktor.level, prediktor.score, prediktor.poruka 
             ]
         )
 
@@ -42,17 +43,13 @@ export class OdrzavanjeService
     }
 
 
-    private async predict(telemtry: any)
+    async predict(telemtry: sensorDTO)
     {
         let score=0;
         if(telemtry.engineTemp>95) 
             score+=20;
         if(telemtry.engineTemp>95) 
             score+=10;
-        if(telemtry.batteryLevel<30) 
-            score+=10;
-        if(telemtry.batteryLevel<15) 
-            score+=20;
         if(telemtry.odometar>50000) 
             score+=5;
         if(telemtry.odometar>100000) 
@@ -78,28 +75,24 @@ export class OdrzavanjeService
     }
 
 
-    async healthScoreZaVozilo(telemtry: any, deviceId: string)
+    async healthScoreZaVozilo(telemtry: sensorDTO, deviceId: string)
     {
         let healthCheck=100;
-        if(telemtry.sensors?.engineTemp>95) 
+        if(telemtry.engineTemp>95) 
             healthCheck-=0.1;
-        if(telemtry.sensors?.engineTemp>110) 
+        if(telemtry.engineTemp>110) 
             healthCheck-=0.2;
-        if(telemtry.sensors?.batteryLevel<30) 
+        if(telemtry.odometar>50000) 
             healthCheck-=0.1;
-        if(telemtry.sensors?.batteryLevel<15) 
+        if(telemtry.odometar>100000) 
             healthCheck-=0.3;
-        if(telemtry.sensors?.odometar>50000) 
+        if(telemtry.odometar>150000) 
             healthCheck-=0.1;
-        if(telemtry.sensors?.odometar>100000) 
+        if(telemtry.fuelLevel<20) 
+            healthCheck-=0.1;
+        if(telemtry.fuelLevel<10) 
             healthCheck-=0.3;
-        if(telemtry.sensors?.odometar>150000) 
-            healthCheck-=0.1;
-        if(telemtry.sensors?.fuelLevel<20) 
-            healthCheck-=0.1;
-        if(telemtry.sensors?.fuelLevel<10) 
-            healthCheck-=0.3;
-        if(telemtry.sensors?.dtcCode) 
+        if(telemtry.dtcCode) 
             healthCheck-=100;
 
 
@@ -109,7 +102,7 @@ export class OdrzavanjeService
         await this.redis.set(`health:${deviceId}:latest`, String(healthCheck));
         await this.redis.zAdd(`leaderboard:healthScore`, healthCheck, deviceId)
 
-        await this.cass.execute(`INSERT INTO healthscore (deviceid, timestamp, dan, score, level) VALUES(?,?,?,?,?))`,[
+        await this.cass.execute(`INSERT INTO healthscore (deviceid, timestamp, dan, score, level) VALUES(?,?,?,?,?)`,[
             deviceId,
             new Date().toISOString(),
             new Date().toISOString().slice(0,10),
@@ -120,7 +113,6 @@ export class OdrzavanjeService
             level,
             score: healthCheck,
             timestamp: new Date().toISOString()
-            
         }
 
     }
@@ -133,6 +125,13 @@ export class OdrzavanjeService
             return JSON.parse(rediscache)
         }
         await this.redis.setJson(`health:${deviceId}:latest`,0, 86400);
+    }
+
+    async vratiHealthScoreIzCassZaDan(deviceId:string, dan:string, timestamp: string)
+    {
+        
+        const res= await this.cass.execute(`SELECT score FROM healthscore WHERE deviceid=? AND dan=? AND timestamp=?`,[deviceId, dan, timestamp])
+        return res.rows[0]
     }
     async vratiPoruku(level: string)
     {
@@ -150,7 +149,7 @@ export class OdrzavanjeService
         }
     }
 
-    async vratiZadnjuPredikciju(deviceId: string)
+    async vratiZadnjuPredikciju(deviceId: string, ts:string)
     {
         const rediscache= await this.redis.get(`maintenance:${deviceId}:prediction`)
         if(rediscache)
@@ -158,28 +157,56 @@ export class OdrzavanjeService
             return JSON.parse(rediscache)
         }
         else{
-            const cassRez= await this.cass.execute(`SELECT * FROM maintenance_predictor WHERE deviceId=? LIMIT 1`,[deviceId])
+            const cassRez= await this.cass.execute(`SELECT * FROM maintenance_predictor WHERE deviceid=? and ts=? LIMIT 1`,[deviceId,ts])
             return cassRez.rows[0]
         }
     }
 
-    async obrisiZadnjuPredikciju(deviceId:string)
+    async obrisiZadnjuPredikciju(deviceId:string,  timestamp:string)
     {
-        await this.cass.execute(`DELETE FROM maintenance WHERE deviceId=?`,
-            [deviceId]
+       
+        await this.cass.execute(`DELETE FROM maintenance_predictor WHERE deviceid=? and ts=?`,
+            [deviceId, timestamp]
         )
         await this.redis.del(`maintenance:${deviceId}:prediction`)
+        return {ok:true}
     }
+
+    
+    async obrisiHealthscore(deviceId:string, timestamp:string, dan:string)
+    {
+       
+        await this.cass.execute(`DELETE FROM healthscore WHERE deviceid=? and timestamp=? and dan=? `,
+            [deviceId, timestamp, dan]
+        )
+        console.log(timestamp)
+        console.log(deviceId)
+        console.log(dan)
+        return {ok:true}
+    }
+
 
     async resetPrediktorURedis(deviceId: string)
     {
          const rediscache= await this.redis.get(`maintenance:${deviceId}:prediction`)
-        if(rediscache)
+        if(!rediscache)
         {
-            return JSON.parse(rediscache)
+            console.log("prazan cache")
         }
         await this.redis.setJson(`maintenance:${deviceId}:prediction`,0, 86400);
+        return {ok:true}
+    }
 
+    
+    async resetHealthscoreURedis(deviceId: string)
+    {
+         const rediscache= await this.redis.get(`health:${deviceId}:latest`)
+        if(!rediscache)
+        {
+            console.log('prazan cache')
+        }
+        await this.redis.setJson(`health:${deviceId}:latest`,0, 86400);
+        return {ok:true}
     }
 
 }

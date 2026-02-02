@@ -118,6 +118,11 @@ export class AlertsService{
 
     async sacuvajUpozorenja(deviceId: string, a: alertsDTO)
     {
+        if (!a?.code || !a?.message || !a?.severity) {
+            console.log("Preskacem nevalidno upozorenje:", a);
+             return;
+        }       
+
         const allowed= await this.upozorenjaRateLimit(deviceId)
         if(!allowed)
         {

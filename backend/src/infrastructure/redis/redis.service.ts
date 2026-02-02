@@ -35,7 +35,7 @@ export class RedisService
         return await this.redisClient.get(key);
     }
 
-    async set(key:string, value: string)
+    async set(key:string, value: string, ttl?:string)
     {
         return await this.redisClient.set(key, value);
     }

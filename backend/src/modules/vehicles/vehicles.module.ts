@@ -9,7 +9,7 @@ import { GPSModule } from "../gps/gps.module";
 import { AlertsModule } from "../upozorenja/alerts.module";
 
 @Module({
-    imports:[CassandraModule, RedisModule,ApiModule,telemetryModule, GPSModule, AlertsModule],
+    imports:[CassandraModule, RedisModule,ApiModule,telemetryModule, GPSModule, AlertsModule,AlertsModule],
     controllers:[VehicleController],
     providers: [VehicleService],
     exports: [VehicleService]
