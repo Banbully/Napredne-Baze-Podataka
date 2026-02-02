@@ -5,7 +5,6 @@ export class VehicleDTO
     @IsOptional() @IsString() marka?: string
     @IsOptional() @IsString() model?: string
     @IsOptional() @IsString() gorivo?: string
-
     @IsOptional() @IsNumber() godinaProizvodnje?: number
     @IsOptional() @IsString() boja?: string
     @IsOptional() @IsString() registracija?: string

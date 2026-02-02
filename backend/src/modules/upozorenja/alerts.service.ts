@@ -163,7 +163,7 @@ export class AlertsService{
             await this.red.setJson(`alert:${deviceId}:item:${upozorenjeId}`, alert, 86400),
             !a.reseno && await this.red.lPush(`alert:${deviceId}:${dan}:aktivna`,JSON.stringify(alert))&& 
             this.red.lPush(`alert:${deviceId}:aktivna`,JSON.stringify(alert)),
-            await this.red.lPush(`alert:${upozorenjeId}:list`, JSON.stringify(alert)),
+            await this.red.lPush(`alert:${deviceId}:list`, JSON.stringify(alert)),
             await this.red.lPush(`alert:queue`, JSON.stringify(alert))
         ])
     }
@@ -195,6 +195,11 @@ export class AlertsService{
     async vratiSvaResenaUpozorenja(deviceId: string, dan:string)
     {
         try{
+             const allowed = await this.upozorenjaReadRateLimit(deviceId);
+
+        if (!allowed) {
+            throw new HttpException("Previse zahteva. Pokusajte kasnije.",HttpStatus.TOO_MANY_REQUESTS);
+        }
             const cached = await this.red.getInrange(`alert:${deviceId}:${dan}:aktivna`,0,0)
             if(cached)
                 return cached.map(r=> JSON.parse(r))   
@@ -206,6 +211,11 @@ export class AlertsService{
 
     async vratiSvaUpozorenjaZaUredjajOdDo(deviceId:string, od:string,doo:string)
     {
+        const allowed = await this.upozorenjaReadRateLimit(deviceId);
+
+        if (!allowed) {
+            throw new HttpException("Previse zahteva. Pokusajte kasnije.",HttpStatus.TOO_MANY_REQUESTS);
+        }
         const startDan= new Date(od)
         const krajDan= new Date(doo)
         let dani: string[]=[]
@@ -253,7 +263,24 @@ export class AlertsService{
             await this.red.expire(`alert:ratelimiter:${deviceId}`, ttl)
         }
 
-        return count<limit;
+        if (count>limit)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+     async upozorenjaReadRateLimit(deviceId:string, limit=5, ttl=60)
+    {
+        const count= await this.red.incr(`alert:read:ratelimiter:${deviceId}`);
+        if(count===1)
+        {
+            await this.red.expire(`alert:read:ratelimiter:${deviceId}`, ttl)
+        }
+
+        return count<=limit
+       
     }
     async resiUpozorenje(deviceId:string, dan:string, upozorenjeId:string)
     {
