@@ -63,7 +63,7 @@ export class AnalyticsService
         {
             return cached
         }
-
+ 
         while(startDan<=krajDan)
         {
             dani.push(startDan.toISOString().slice(0,10))
@@ -71,13 +71,13 @@ export class AnalyticsService
         }
         for(const dan of dani){
             const res= await this.cass.execute(`SELECT ts,odometer FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
-
+ 
              //gledaj obrnutu logiku msm ima da izgleda ko da vracamo kilometre thanks api
             const rez= res.rows.map(r => ({x:r.ts,y: r.odometer}));
-
+ 
             rezultat=rezultat.concat(rez)
         }
-
+ 
         await this.red.set(`analitika:${deviceId}:odometar:${od}:${doo}`, JSON.stringify(rezultat))
         return rezultat;
     }
@@ -102,18 +102,18 @@ export class AnalyticsService
         }
         for(const dan of dani){
             const res= await this.cass.execute(`SELECT ts,enginetemp FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
-
+ 
             rezultat=rezultat.concat(res.rows.map(r=>({x:r.ts, y:r.enginetemp})))
         }
         if(rezultat.length==0)
         {
             return 0
         }
-
+ 
         await this.red.set(`analitika:${deviceId}:temp:${od}:${doo}`, JSON.stringify(rezultat))
         return rezultat;
     }
-
+    
     async potrosnjaGoriva(deviceId:string, od:string, do0:string)
     {
         
@@ -193,30 +193,29 @@ export class AnalyticsService
         const krajDan= new Date(doo)
         let dani: string[]=[]
         let rezultat: any[]=[]
-
+ 
         const cached=await this.red.getJSON(`analitika:${deviceId}:engineRpm:od${od}:do${doo}`)
-        if(cached) 
+        if(cached)
             return cached
-
-
+ 
+ 
         while(startDan<=krajDan)
         {
             dani.push(startDan.toISOString().slice(0,10))
             startDan.setDate(startDan.getDate()+1)
         }
-
+ 
         for(const dan of dani){
-                const res= await this.cass.execute(`SELECT engineRpm from telemetry_by_device_day 
-                WHERE deviceid=? AND dan=? ORDER BY ts DESC`,
+                const res= await this.cass.execute(`SELECT ts,enginerpm from telemetry_by_device_day
+                WHERE deviceid=? AND dan=?`,
                 [deviceId, dan]
-            )   
-            rezultat= rezultat.concat(res.rows)
+            )  
+            rezultat= rezultat.concat(res.rows.map(r=>({x:r.ts, y:r.enginerpm})))
         }
-
+ 
         await this.red.set(`analitika:${deviceId}:engineRpm:od${od}:do${doo}`,JSON.stringify(rezultat))
         return rezultat
     }
-
 
 
     async dailyAnalitika(deviceId: string, dan:string)

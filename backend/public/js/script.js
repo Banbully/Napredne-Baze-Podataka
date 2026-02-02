@@ -790,7 +790,6 @@ analitikaPrimeniBtn.addEventListener("click", async () => {
         console.log("Analitika response:", data);
         
         generisiGraf(data, tipAnalitike);
-
     } catch (err) {
         console.error("Analitika error:", err);
     }
@@ -800,11 +799,36 @@ analitikaPrimeniBtn.addEventListener("click", async () => {
 let analitikaChart = null; 
 
 function generisiGraf(xyData, tipAnalitike) {
-    xyData.sort((a, b) => new Date(a.x) - new Date(b.x)); // sortiranje
 
+
+    //xyData.sort((a, b) => new Date(a.x) - new Date(b.x)); // sortiranje
+    
+    const canvas = document.getElementById("analitika-chart");
     const ctx = document.getElementById("analitika-chart").getContext("2d");
 
     if (analitikaChart) analitikaChart.destroy();
+
+//==========SPEC SLUCAJ=========//
+    if (tipAnalitike === "analitikaPotrosnja") {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          ctx.font = "bold 16px Arial";
+          ctx.fillStyle = "#8791DD";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          const vrednost = Number(xyData).toFixed(2);
+          ctx.fillText(
+              `Prosecna potrošnja: ${vrednost}`,
+              canvas.width / 2,
+              canvas.height / 2
+          );
+
+          return; // 👈 BREAK – ništa dalje se ne izvršava
+      }
+//============================//
+
+    xyData.sort((a, b) => new Date(a.x) - new Date(b.x)); // sortiranje
 
     analitikaChart = new Chart(ctx, {
         type: 'line',
@@ -848,6 +872,7 @@ function generisiGraf(xyData, tipAnalitike) {
         }
     });
 }
+
 //====================================================//
 
 //==================LOKACIJA============================//
