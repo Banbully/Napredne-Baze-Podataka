@@ -154,13 +154,29 @@
                 </div>
 
                 <div class="btn-wrapper">
-                    <select class="select-filter">
-                        <option value="km">Najviše pređenih kilometara</option>
-                        <option value="servisi">Najviše servisa</option>
-                        <option value="datum">Najskorije servisirano</option>
+
+                    <div class="radio-wrapper">
+                        <label>
+                            <input type="radio" name="scope" value="Globalno" checked>
+                            Globalno
+                        </label>
+                        <label>
+                            <input type="radio" name="scope" value="Dnevna">
+                            Dnevna
+                        </label>
+                    </div>
+
+                    <select class="select-filter">           
+                        <option value="Gorivo">Potrošnja goriva</option>
+                        <option value="Brzina">Najveća brzina</option>
+                        <option value="Temperatura">Temperatura motora</option>
+                        <option value="Obrtaji">Obrtaji motora</option>
+                        <option value="Odometar">Najviše pređenih kilometara</option>
+                        <option value="Health">Najviše servisa</option>
                     </select>
 
-                    <button class="btn">
+
+                    <button class="btn" id="leaderboardBtn">
                         Primeni
                     </button>
                 </div>
@@ -172,42 +188,13 @@
                         <th>#</th>
                         <th>Marka</th>
                         <th>Model</th>
-                        <th>Registracija</th>
+                        <th>Score</th>
                     </tr>
                 </thead>
 
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Audi</td>
-                        <td>A4</td>
-                        <td>BG-123-AA</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>BMW</td>
-                        <td>320d</td>
-                        <td>NS-456-BB</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Volkswagen</td>
-                        <td>Passat</td>
-                        <td>KG-789-CC</td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>Škoda</td>
-                        <td>Octavia</td>
-                        <td>NI-321-DD</td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td>Mercedes</td>
-                        <td>C220</td>
-                        <td>SU-654-EE</td>
-                    </tr>
-                </tbody>
+            <tbody id="leaderboard-body">
+            </tbody>
+
             </table>
         </div>
 

@@ -118,7 +118,7 @@ async function loadVehicles() {
 document.addEventListener("DOMContentLoaded", () => {
     loadVehicles(); 
     loadVehicleList();
-
+    loadLeaderboard();
 });
 
 
@@ -263,7 +263,69 @@ form.addEventListener("submit", async (event) => {
     alert("Došlo je do greške pri unosu vozila");
   }
 });
+//=======================================================//
 
+//=====================LEADERBAORD===========================//
+function getToday() {
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
+}
+
+document.getElementById("leaderboardBtn").addEventListener("click", loadLeaderboard);
+
+async function loadLeaderboard() {
+    const tbody = document.getElementById("leaderboard-body");
+    tbody.innerHTML = "";
+
+    const apiSuffix = document.querySelector(".select-filter").value;
+    const scope = document.querySelector('input[name="scope"]:checked').value;
+
+    let url = `http://localhost:3000/${scope}${apiSuffix}`;
+
+    if (scope === "Dnevna") {
+        url += `?dan=${getToday()}`;
+    }
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Greška pri učitavanju leaderboarda");
+
+        const data = await res.json();
+
+        data.forEach((item, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.marka}</td>
+                <td>${item.model}</td>
+                <td>${item.score}</td>
+                
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=========================================================//
 
 //==============DRUGA SEKCIJA - ucitavanje vozila =========/
 async function loadVehicleList() {

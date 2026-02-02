@@ -468,3 +468,10 @@ input::placeholder{
     max-width: 930px;
     margin-inline: auto;
 }
+
+.radio-wrapper{
+    display: inline-flex;
+    margin-right: 13px;
+    gap: 21px;
+    padding-top: 14px;
+}
