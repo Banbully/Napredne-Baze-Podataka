@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrailMetrics</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <head class="navbar">
@@ -113,9 +114,9 @@
                                 <p class="metric-heading">Obrtaji motora</p>
                                 <p class="metric-value">3000</p>
                             </div>
-                            <div class="metric-info">
-                                <p class="metric-heading">Trenutna lokacija</p>
-                                <p class="metric-value">Aleksadnra Medvedeva 14, Nis</p>
+                            <div class="metric-info-btns">
+                                <button class="btn" id="lokacija">Lokacija</button>
+                                <button class="btn ghost-button form" id="analitika">Analitika</button>
                             </div>
                         </div>
 
@@ -297,8 +298,85 @@
             </table>
         </div>
     </div> 
+
+    <div id="analitika-form" class="modal-form">
+        <div class="modal analitika-modal">
+
+            <h2>ANALITIKA</h2>
+
+            <div class="pre-table analitika-pretable">
+                <div class="h2-wrapper">
+                    <p>
+                        <span class="analitika-header">
+                            Analitika za izabrano vozilo
+                        </span>
+                    </p>
+                </div>
+
+                <div class="btn-wrapper">
+                    <button id="close-analitika-btn"
+                            class="btn ghost-button cancel-button form">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+
+            <div class="analitika-filters">
+
+                <div class="filter-group">
+                    <label for="analitika-od-datuma">Od datuma</label>
+                    <input type="date"
+                        id="analitika-od-datuma"
+                        class="input-field">
+                </div>
+
+                <div class="filter-group">
+                    <label for="analitika-tip">Tip analitike</label>
+                    <select id="analitika-tip" class="select-filter">
+                        <option value="analitikaBrzina">Brzina</option>
+                        <option value="analitikaOdometar">Odometar</option>
+                        <option value="analitikaTemperatura">Temperatura</option>
+                        <option value="analitikaPotrosnja">Potrošnja</option>
+                        <option value="analitikaObrtaji">Obrtaji</option>
+                        <option value="analitikaDnevna">Dnevna analitika</option>
+                    </select>
+                </div>
+
+                <div class="filter-group apply-wrapper">
+                    <button id="analitika-primeni-btn" class="btn">
+                        Primeni
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="analitika-content">
+                <canvas id="analitika-chart"></canvas>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div id="location-modal" class="modal-form">
+        <div class="modal analitika-modal">
+            <h2>Lokacija vozila</h2>
+            <div class="btn-wrapper">
+            <button id="close-location-btn" class="btn ghost-button cancel-button form lokacija-btn">
+                Zatvori
+            </button>
+            </div>
+            <div id="map" style="height: 300px; width: 100%;"></div>
+        </div>
+    </div>
+
   </div>
 
     <script src="js/script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
 </body>
 </html>

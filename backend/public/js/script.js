@@ -154,6 +154,8 @@ const servisSubmitBtn = document.getElementById("servis-submit");
 const servisOpenBtn = document.getElementById("servis-open");
 const formServisi = document.getElementById("vehicle-servis-form");
 const servisIstorijaBtn = document.getElementById("servis-istorija");
+const analitikaBtn = document.getElementById("analitika");
+const lokacijaBtn = document.getElementById("lokacija");
 
 
 //======== FUNKCIJA ZA OTVARANJE MODALA I ZELJENE FORME ======//
@@ -200,6 +202,16 @@ servisIstorijaBtn.addEventListener("click", async () => {
   await loadServiceHistory(servisIstorijaBtn.dataset.deviceid);
   openModal("service-history-modal");
 })
+
+analitikaBtn.addEventListener("click", () => {
+  openModal("analitika-form");
+});
+
+lokacijaBtn.addEventListener("click", () => {
+    const id = lokacijaBtn.dataset.deviceid;
+    openLocationModal(id);
+});
+
 
 // ================= INSERT VOZILA =================
 form.addEventListener("submit", async (event) => {
@@ -624,7 +636,6 @@ function updateRightPanel(vehicle) {
         metricValues[3].textContent = vehicle.gorivo || "N/A";
         metricValues[4].textContent = vehicle.enginetemp ? `${vehicle.enginetemp} C` : "N/A";
         metricValues[5].textContent = vehicle.enginerpm ? vehicle.enginerpm : "0";
-        metricValues[6].textContent = vehicle.location || "Nepoznata lokacija";
     }
 
     // desni metrics: Do malog servisa i do velikog servisa
@@ -640,6 +651,13 @@ function updateRightPanel(vehicle) {
     if (servisIstorijaBtn) {
       servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
     }
+    if (analitikaBtn) {
+      analitikaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (lokacijaBtn) {
+      lokacijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+
 }
 
 function updateVehicleStaticInfo(vehicle) {
@@ -656,6 +674,12 @@ function updateVehicleStaticInfo(vehicle) {
     }
     if (servisIstorijaBtn) {
         servisIstorijaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (analitikaBtn) {
+      analitikaBtn.dataset.deviceid = vehicle.deviceid;
+    }
+    if (lokacijaBtn) {
+      lokacijaBtn.dataset.deviceid = vehicle.deviceid;
     }
 }
 
@@ -733,3 +757,131 @@ function proveriDaLiJeVoziloPokrenuto(deviceId) {
     
     return toggle.checked === true;
 }
+
+//=======================ANALITIKA=============================//
+const analitikaPrimeniBtn = document.getElementById("analitika-primeni-btn");
+const analitikaOdInput = document.getElementById("analitika-od-datuma");
+const analitikaTipSelect = document.getElementById("analitika-tip");
+
+analitikaOdInput.value = getToday();
+
+analitikaPrimeniBtn.addEventListener("click", async () => {
+
+    const deviceId = analitikaBtn.dataset.deviceid;
+    if (!deviceId) {
+        console.warn("Nema deviceId za analitiku");
+        return;
+    }
+
+    const tipAnalitike = analitikaTipSelect.value;
+    const od = analitikaOdInput.value;
+    const doDatuma = getToday();
+
+    const apiUrl =
+        `http://localhost:3000/analitika/${tipAnalitike}/${deviceId}?od=${od}&do=${doDatuma}`;
+
+    console.log("Pozivam API:", apiUrl);
+
+    try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("Greška u analitici");
+
+        const data = await res.json();
+        console.log("Analitika response:", data);
+        
+        generisiGraf(data, tipAnalitike);
+
+    } catch (err) {
+        console.error("Analitika error:", err);
+    }
+});
+
+
+let analitikaChart = null; 
+
+function generisiGraf(xyData, tipAnalitike) {
+    xyData.sort((a, b) => new Date(a.x) - new Date(b.x)); // sortiranje
+
+    const ctx = document.getElementById("analitika-chart").getContext("2d");
+
+    if (analitikaChart) analitikaChart.destroy();
+
+    analitikaChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: xyData.map(d => new Date(d.x)),
+            datasets: [{
+                label: tipAnalitike,
+                data: xyData.map(d => d.y),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0//0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#ffffff' } },
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false,
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff'
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'hour', tooltipFormat: 'yyyy-MM-dd HH:mm' },
+                    title: { display: true, text: 'Vreme', color: '#ffffff' },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255,255,255,0.2)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: tipAnalitike, color: '#ffffff' },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255,255,255,0.2)' }
+                }
+            }
+        }
+    });
+}
+//====================================================//
+
+//==================LOKACIJA============================//
+async function openLocationModal(deviceId) {
+    try {
+        const res = await fetch(`http://localhost:3000/gps/zadnjaLokacija?deviceId=${deviceId}`);
+        const data = await res.json();
+
+        const { latitude, longitude, zone, accuracy, timestamp } = data;
+
+        // otvori modal
+        openModal("location-modal");
+
+        // ukloni prethodnu mapu ako postoji
+        if (window.locationMap) {
+            window.locationMap.remove();
+        }
+
+        // inicijalizuj mapu
+        window.locationMap = L.map('map').setView([latitude, longitude], 13);
+
+        // dodaj OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(window.locationMap);
+
+        // marker
+        L.marker([latitude, longitude]).addTo(window.locationMap)
+            .bindPopup(`Vozilo u zoni: ${zone}<br>Tačnost: ${accuracy}m<br>Vreme: ${new Date(timestamp).toLocaleString()}`)
+            .openPopup();
+
+    } catch (err) {
+        console.error("Greška pri učitavanju lokacije:", err);
+    }
+}
+
+

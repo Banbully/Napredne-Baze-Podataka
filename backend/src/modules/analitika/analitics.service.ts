@@ -73,7 +73,7 @@ export class AnalyticsService
             const res= await this.cass.execute(`SELECT ts,odometer FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
 
              //gledaj obrnutu logiku msm ima da izgleda ko da vracamo kilometre thanks api
-            const rez= res.rows.map(r => ({x:r.ts,y: r.odometar}));
+            const rez= res.rows.map(r => ({x:r.ts,y: r.odometer}));
 
             rezultat=rezultat.concat(rez)
         }
@@ -103,7 +103,7 @@ export class AnalyticsService
         for(const dan of dani){
             const res= await this.cass.execute(`SELECT ts,enginetemp FROM telemetry_by_device_day WHERE deviceid=? AND dan=?`,[deviceId, dan])
 
-            rezultat=rezultat.concat(res.rows.map(r=>({x:r.ts, y:r.engineTemp})))
+            rezultat=rezultat.concat(res.rows.map(r=>({x:r.ts, y:r.enginetemp})))
         }
         if(rezultat.length==0)
         {

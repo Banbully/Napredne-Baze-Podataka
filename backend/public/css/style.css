@@ -475,3 +475,35 @@ input::placeholder{
     gap: 21px;
     padding-top: 14px;
 }
+
+.metric-info-btns{
+    display: flex;
+    align-items: flex-start;
+    padding-top: 32px;
+    gap: 12px;
+}
+
+#analitika.chart{
+     width: 600;
+     height: 400; 
+}
+
+.analitika-pretable{
+    margin-top: 30px;
+}
+
+.analitika-filters{
+    display: flex;
+    align-content: center;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.analitika-modal{
+    width: 415px;
+    max-width: none;
+}
+
+.lokacija-btn {
+    margin-block: 13px;
+}
