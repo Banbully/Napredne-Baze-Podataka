@@ -16,13 +16,15 @@ export class NotificationService
         const notifikacija={
             deviceId,
             ...alert,
-            read: false,
+            reseno: false,
+            procitano:false
         };
         const jsonNotf= JSON.stringify(notifikacija)
         await this.red.lPush(`notifications:${deviceId}`, jsonNotf,);
         await this.red.set(`notifications${deviceId}:latest`, jsonNotf)
         await this.red.incr(`notifications${deviceId}:aktivne`)
         await this.red.incr(`notifications${deviceId}:neprocitane`)
+        await this.red.incr(`notifications${deviceId}:total`)
         return notifikacija
     }
 
@@ -40,30 +42,32 @@ export class NotificationService
 
     async obrisiNeprocitane(deviceId:string)
     {
-        return this.red.del(`notifications${deviceId}:neprocitane`);
+        await this.red.del(`notifications${deviceId}:neprocitane`);
+        return {ok:true}
     }
     async obrisiHashnotifikacije(deviceId:string)
     {
-        await this.red.hDel(`notifications:${deviceId}`, deviceId)
+        await this.red.del(`notifications:${deviceId}`)
         return {ok:true}
     }
 
     async vratiZadnju(deviceId:string)
     {
-        const data = await this.red.get(`notifications:${deviceId}:latest`);
+        const data = await this.red.get(`notifications${deviceId}:latest`);
 
         if (!data) return null;
-
-        return JSON.parse(data);
+        console.log(data[0])
+        return data
+        
     }
 
 
     async obrisiSve(deviceId:string)
     {
         await Promise.all([await this.red.del(`notifications:${deviceId}`),
-            await this.red.del(`notifications:${deviceId}:latest`),
-            await this.red.del(`notifications:${deviceId}:total`),
-            await this.red.del(`notifications:${deviceId}:neprocitane`)
+            await this.red.del(`notifications${deviceId}:latest`),
+            await this.red.del(`notifications${deviceId}:total`),
+            await this.red.del(`notifications${deviceId}:neprocitane`)
         ])
 
         return {ok:true}

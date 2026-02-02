@@ -6,7 +6,6 @@ export class alertsDTO
         @IsOptional() @IsString() code?:String;
         @IsOptional() @IsString() message?:String;
         @IsOptional() @IsString() severity?:String;
-        @IsOptional() @IsString() timestamp?:String;
         @IsString() @IsBoolean() reseno: boolean
 }
 
@@ -15,8 +14,7 @@ export class alertsUpdateDTO
         @IsOptional() @IsString() code?:String;
         @IsOptional() @IsString() message?:String;
         @IsOptional() @IsString() severity?:String;
-        @IsOptional() @IsString() timestamp?:String;
-        @IsString() @IsBoolean() reseno: boolean
+        @IsOptional() @IsBoolean() reseno: boolean
 }
 
 
@@ -28,5 +26,5 @@ export class alertsInsertDTO
         @IsOptional() @IsString() message?:string;
         @IsOptional() @IsString() severity?:string;
         @IsOptional() @IsString() timestamp?:string;
-        @IsString() @IsBoolean() reseno: boolean
+        @IsOptional() @IsBoolean() reseno: boolean
 }
