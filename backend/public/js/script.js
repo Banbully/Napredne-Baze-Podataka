@@ -565,7 +565,8 @@ function getSelectedVehicleId() {
 }
 
 async function fetchAndUpdateTelemetry(deviceId) {
-    // ako vozilo nije selektovano → ništa
+
+    console.log("OVO VOZILO JE SELEKTOVANO" + deviceId);
     if (getSelectedVehicleId() !== deviceId) return;
 
     const today = new Date();
@@ -650,9 +651,11 @@ function updateVehicleStaticInfo(vehicle) {
 }
 
 function updateTelemetryInfo(t) {
+
+    console.log("OVO je telemetrija" + t);
     const metricValues = document.querySelectorAll(".metric-value");
 
-    if (metricValues.length < 7) return;
+    if (metricValues.length < 6) return;
 
     metricValues[0].textContent = t.speed ? `${t.speed} Km/h` : "0 Km/h";
     metricValues[1].textContent = t.fuel ? `${t.fuel}%` : "0%";
