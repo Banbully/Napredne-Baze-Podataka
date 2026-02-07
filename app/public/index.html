@@ -40,6 +40,7 @@
                         <th>Registracija</th>
                         <th>Status</th>
                         <th>Pokreni vozilo</th>
+                        <th>Izmeni</th>
                         <th>Izbriši vozilo</th>
                     </tr>
                 </thead>
@@ -214,6 +215,26 @@
                 <button type="submit" class="btn center" id="vehicle-insert-btn-close">Posalji</button>
                 <button type="button" class="btn center ghost-button form cancel-button">Otkazi</button>
             </div>    
+        </div>
+    </form>
+
+    <form id="vehicle-update-form" class="modal-form">
+        <div class="modal">
+            <h2>AZURIRAJ VOZILO</h2>
+
+            <div class="insert-vehicle-inputs-wrapper">
+                <input id="u-marka" type="text" placeholder="Marka">
+                <input id="u-model" type="text" placeholder="Model">
+                <input id="u-boja" type="text" placeholder="Boja">
+                <input id="u-godina" type="number" placeholder="Godina Proizvodnje">
+                <input id="u-gorivo" type="text" placeholder="Gorivo">
+                <input id="u-reg" type="text" placeholder="Registracija">
+            </div>
+
+            <div class="vehicle-insert-buttons-wrapper">
+                <button type="submit" class="btn center">Azuriraj</button>
+                <button type="button" class="btn center form ghost-button cancel-button">Otkaži</button>
+            </div>
         </div>
     </form>
 

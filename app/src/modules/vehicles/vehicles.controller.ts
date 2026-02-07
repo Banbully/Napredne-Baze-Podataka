@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { VehicleService } from "./vehicles.service";
-import { VehicleDTO } from "./vehicles.dto";
+import { VehicleDTO, VehicleUpdateDTO } from "./vehicles.dto";
 
 @Controller("Vozila")
 export class VehicleController
@@ -17,10 +17,11 @@ export class VehicleController
     }
 
     @Put(':id')
-    updateVozilo(@Param('id')id: string, @Body() dto: any,)
+    updateVozilo(@Param('id') id: string, @Body() dto: VehicleUpdateDTO,) 
     {
         return this.service.UpdateVozilo(id, dto);
     }
+
     
     @Delete(':id')
     ObrisiVozilo(@Param('id')id: string)

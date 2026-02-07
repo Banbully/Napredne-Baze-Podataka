@@ -59,6 +59,11 @@ async function loadVehicles() {
                         </label>
                     </td>
                     <td>
+                        <button class="update-button btn" data-deviceid="${vehicle.deviceid}">
+                            Izmeni
+                        </button>
+                    </td>
+                    <td>
                         <button class="delete-btn" data-deviceid="${vehicle.deviceid}">
                             <img src="resources/DeleteIcon.svg" alt="">
                         </button>
@@ -141,6 +146,7 @@ document.querySelectorAll("#vehicleToggle").forEach(toggle => {
 const openBtn = document.getElementById("insert-vehicle-btn");
 const modalOverlay = document.querySelector(".modal-overlay");
 const cancelButtons = document.querySelectorAll(".cancel-button");
+const updateButtons = document.querySelectorAll(".update-button");
 const form = document.getElementById("vehicle-insert-form");
 const servisSubmitBtn = document.getElementById("servis-submit");
 const servisOpenBtn = document.getElementById("servis-open");
@@ -149,6 +155,8 @@ const servisIstorijaBtn = document.getElementById("servis-istorija");
 const analitikaBtn = document.getElementById("analitika");
 const lokacijaBtn = document.getElementById("lokacija");
 const upozorenjaBtn = document.getElementById("upozorenja");
+const updateForm = document.getElementById("vehicle-update-form");
+
 
 
 //======== FUNKCIJA ZA OTVARANJE MODALA I ZELJENE FORME ======//
@@ -185,6 +193,14 @@ cancelButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     closeModal();
   });
+});
+
+tableBody.addEventListener("click", (event) => {
+  const btn = event.target.closest(".update-button");
+  if (!btn) return;
+
+  updateModal(btn.dataset.deviceid);
+
 });
 
 servisOpenBtn.addEventListener("click",() => {
@@ -277,6 +293,7 @@ form.addEventListener("submit", async (event) => {
   }
 });
 //=======================================================//
+
 
 //=====================LEADERBAORD===========================//
 function getToday() {
@@ -909,4 +926,105 @@ async function openUpozorenjaModal(deviceId) {
         console.error("Greška pri učitavanju upozorenja:", err);
     }
 }
+//=============================//
+let currentUpdateVehicleId = null;
+
+updateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUpdateVehicleId) {
+    alert("Nema ID vozila za azuriranje");
+    return;
+  }
+
+  const vehicleData = {
+    marka: document.getElementById("u-marka").value.trim(),
+    model: document.getElementById("u-model").value.trim(),
+    boja: document.getElementById("u-boja").value.trim(),
+    godinaProizvodnje: document.getElementById("u-godina").value.trim(),
+    gorivo: document.getElementById("u-gorivo").value.trim(),
+    registracija: document.getElementById("u-reg").value.trim()
+  };
+
+  if (
+    !vehicleData.marka ||
+    !vehicleData.model ||
+    !vehicleData.boja ||
+    !vehicleData.godinaProizvodnje ||
+    !vehicleData.gorivo ||
+    !vehicleData.registracija
+  ) {
+    alert("Sva polja moraju biti popunjena.");
+    return;
+  }
+
+  const yearRegex = /^\d{4}$/;
+  if (!yearRegex.test(vehicleData.godinaProizvodnje)) {
+    alert("Godina mora imati tačno 4 cifre (npr. 1999).");
+    return;
+  }
+
+  vehicleData.godinaProizvodnje = Number(vehicleData.godinaProizvodnje);
+
+  const regRegex = /^[A-Z]{2}-\d{3}-[A-Z]{2}$/;
+  if (!regRegex.test(vehicleData.registracija)) {
+    alert("Registracija mora biti u formatu BG-123-AC.");
+    return;
+  }
+
+
+  try {
+    const response = await fetch(
+      `http://localhost:3000/Vozila/${currentUpdateVehicleId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(vehicleData)
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Greska pri azuriranju vozila");
+    }
+
+    closeModal();
+    loadVehicles();
+    loadVehicleList();
+
+  } catch (error) {
+    console.error(error);
+    alert("Doslo je do greške pri azuriranju vozila");
+  }
+});
+
+async function updateModal(id) {
+  currentUpdateVehicleId = id;
+
+  try {
+    const res = await fetch(`http://localhost:3000/Vozila/${id}`);
+    if (!res.ok) {
+      throw new Error("Ne mogu da učitam podatke o vozilu");
+    }
+
+    const vozilo = await res.json();
+
+
+    document.getElementById("u-marka").value = vozilo.marka || "";
+    document.getElementById("u-model").value = vozilo.model || "";
+    document.getElementById("u-boja").value = vozilo.boja || "";
+    document.getElementById("u-godina").value = vozilo.godina || "";
+    document.getElementById("u-gorivo").value = vozilo.gorivo || "";
+    document.getElementById("u-reg").value = vozilo.registracija || "";
+
+    openModal("vehicle-update-form");
+
+  } catch (error) {
+    console.error(error);
+    alert("Greska pri ucitavanju vozila");
+  }
+}
+
+
 
