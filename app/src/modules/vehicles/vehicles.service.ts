@@ -148,31 +148,6 @@ export class VehicleService
         }
     }
 
-
-
-    async vratiVozilaPoMarci(marka:string)
-    {
-        const res= await this.cass.execute(`SELECT * FROM vozila WHERE marka=?` ,[marka],)
-        return res.rows;
-    }
-
-    async vratiVozilaPoModelu(marka:string, model:string)
-    {
-        const res= await this.cass.execute(`SELECT * FROM vozila WHERE marka=? and model=?` ,[model],)
-        return res.rows;
-    }
-
-    async vratiNovijaVozilaOd(godina:string)
-    {
-        const res= await this.cass.execute(`SELECT * FROM vozila WHERE godina>=?` ,[godina],)
-        return res.rows;
-    }
-
-    async vratiVozilaSaRegOd(datum:string)
-    {
-        const res= await this.cass.execute(`SELECT FROM vozila WHERE registracija>=?`,[datum])
-        return res.rows;
-    }
     async vratiStatus(deviceId: string)
     {
         const status=await  this.red.get(`vozila:${deviceId}:status`)
